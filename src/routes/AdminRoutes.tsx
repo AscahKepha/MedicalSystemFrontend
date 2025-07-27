@@ -5,7 +5,6 @@ import ProtectedRoute from "../ProtectedRoutes";
 import AdminLayout from "../layouts/AdminLayout";
 
 // Pages
-import AdminDashboard from "../components/Admindashboard/AdminDashboard";
 import AdminProfile from "../components/Admindashboard/adminprofile";
 import Alldoctors from "../components/Admindashboard/Alldoctors";
 import AllPatients from "../components/Admindashboard/AllPatients";
@@ -26,8 +25,10 @@ export const adminRoutes = {
     </ProtectedRoute>
   ),
   children: [
-    // Overview
-    { index: true, element: <AdminDashboard /> },
+    // 👇 Default landing page
+    { index: true, element: <ManagementHub /> },
+
+    // Profile
     { path: "profile", element: <AdminProfile /> },
 
     // Management

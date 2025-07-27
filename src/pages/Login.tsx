@@ -70,7 +70,7 @@ export const Login: React.FC = () => {
 
             switch (userRole) {
                 case "admin":
-                    navigate("/admindashboard");
+                    navigate("/admindashboard"); // ✅ now lands on ManagementHub
                     break;
                 case "doctor":
                     navigate("/doctordashboard");
@@ -82,6 +82,7 @@ export const Login: React.FC = () => {
                     navigate("/login");
                     console.warn(`⚠️ Unexpected role "${userRole}". Navigating to login.`);
             }
+
         } catch (error: any) {
             console.error("❌ Login request failed:", error);
             const errorMessage =
