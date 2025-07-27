@@ -84,21 +84,21 @@ export const PrescriptionsApi = createApi({
             invalidatesTags: (result, error, prescriptionId) => [{ type: 'Prescription', id: prescriptionId }, 'Prescription'], // Invalidate specific prescription and general list
         }),
 
-        // Query to get prescriptions by user ID
-        getPrescriptionsByUserId: builder.query<PrescriptionData[], number>({
-            query: (userId) => `prescriptions/${userId}`, 
-            providesTags: (result, _error, userId) =>
+        // Query to get prescriptions by patient ID
+        getPrescriptionsByPatientId: builder.query<PrescriptionData[], number>({
+            query: (patientId) => `patients/${patientId}/prescriptions`, 
+            providesTags: (result, _error, patientId) =>
                 result
                     ? [
-                        { type: 'Prescription', id: `LIST_BY_USER_${userId}` },
+                        { type: 'Prescription', id: `LIST_BY_PATIENT_${patientId}` },
                         ...result.map(({ prescriptionId }) => ({ type: 'Prescription' as const, id: prescriptionId })),
                     ]
-                    : [{ type: 'Prescription', id: `LIST_BY_USER_${userId}` }],
+                    : [{ type: 'Prescription', id: `LIST_BY_PATIENT_${patientId}` }],
         }),
 
         // Query to get prescriptions by doctor ID
         getPrescriptionsByDoctorId: builder.query<PrescriptionData[], number>({
-            query: (doctorId) => `prescriptions/${doctorId}`,
+            query: (doctorId) => `doctors/${doctorId}/prescriptions`,
             providesTags: (result, _error, doctorId) =>
                 result
                     ? [
@@ -129,7 +129,7 @@ export const {
     useAddPrescriptionMutation,
     useUpdatePrescriptionMutation,
     useDeletePrescriptionMutation,
-    useGetPrescriptionsByUserIdQuery,
+    useGetPrescriptionsByPatientIdQuery,
     useGetPrescriptionsByDoctorIdQuery,
     useGetPrescriptionsByAppointmentIdQuery,
 } = PrescriptionsApi;

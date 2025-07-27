@@ -1,29 +1,35 @@
 // routes/doctorRoutes.ts
+
 import { Navigate } from 'react-router-dom';
 import ProtectedRoute from '../ProtectedRoutes';
 import DoctorLayout from '../layouts/DoctorLayout';
 
-import DoctorDashboard from '../components/doctordashboard/DoctorDashboard';
-import UserComplaintsPage from '../components/doctordashboard/UserComplaintsPage';
-import AppointmentsPage from '../components/doctordashboard/AppointmentsPage';
-import PrescriptionsPage from '../components/doctordashboard/PrescriptionsPage';
+// Page components
+import AdminDashboard from '../components/doctordashboard/doctorsdashboard'; // ✅ this is your dashboard layout (NavbarD, HeroD, FooterD)
+import DoctorProfile from '../components/doctordashboard/DoctorProfile';
+import { DoctorsPrescription } from '../components/doctordashboard/PrescriptionsPage';
 import SupportPage from '../components/doctordashboard/SupportPage';
-import PaymentsPage from '../components/doctordashboard/PaymentsPage';
+import DoctorsPayment from '../components/doctordashboard/PaymentsPage';
+import DoctorsComplaints from '../components/doctordashboard/DoctorComplaints';
+import DoctorsAppointments from '../components/doctordashboard/DoctorsAppointments';
 
 export const doctorRoutes = {
-    path: 'doctorsdashboard',
-    element: (
-        <ProtectedRoute>
-            <DoctorLayout />
-        </ProtectedRoute>
-    ),
-    children: [
-        { index: true, element: <Navigate to="me" replace /> },
-        { path: 'me', element: <DoctorDashboard /> },
-        { path: 'appointments', element: <AppointmentsPage /> },
-        { path: 'prescriptions', element: <PrescriptionsPage /> },
-        { path: 'complaints', element: <UserComplaintsPage /> },
-        { path: 'support', element: <SupportPage /> },
-        { path: 'payments', element: <PaymentsPage /> },
-    ]
+  path: 'doctordashboard', // ✅ Must match exactly with your navigate('/doctordashboard')
+  element: (
+    <ProtectedRoute>
+      <DoctorLayout />
+    </ProtectedRoute>
+  ),
+  children: [
+    { index: true, element: <AdminDashboard /> }, // ✅ Default dashboard landing page
+    { path: 'profile', element: <DoctorProfile /> },
+    { path: 'appointments', element: <DoctorsAppointments /> },
+    { path: 'prescriptions', element: <DoctorsPrescription /> },
+    { path: 'complaints', element: <DoctorsComplaints /> },
+    { path: 'support', element: <SupportPage /> },
+    { path: 'payments', element: <DoctorsPayment /> },
+
+    // Optional fallback for unknown subroutes under /doctordashboard
+    { path: '*', element: <Navigate to="." replace /> }
+  ]
 };

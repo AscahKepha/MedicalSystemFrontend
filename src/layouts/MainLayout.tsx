@@ -1,6 +1,7 @@
 // src/layouts/MainLayout.tsx
 import { Outlet } from "react-router-dom";
 import { NavbarH } from "../components/Home/Navbarh"; // adjust path as needed
+import FooterP from "../components/patientdashboard/fotterP";
 
 const MainLayout = () => {
   return (
@@ -9,6 +10,7 @@ const MainLayout = () => {
       <main className="min-h-screen">
         <Outlet />
       </main>
+      <FooterP/>
     </>
   );
 };

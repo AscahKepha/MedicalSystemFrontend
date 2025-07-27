@@ -1,31 +1,33 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import type { RootState } from '../../app/types'; 
+import type { RootState } from '../../app/types';
 
 // Define possible statuses for a payment
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 
 // Define the PaymentData interface
 export interface PaymentData {
-    paymentId: number; 
-    userId: number; 
+    paymentId: number;
+    userId: number; // This might represent either patientId or doctorId depending on context, or you might need separate fields
     appointmentId?: number;
     amount: number;
     paymentDate: string;
-    paymentMethod: string; 
-    transactionId?: string; 
-    status: PaymentStatus; 
-    createdAt: string; 
-    updatedAt: string; 
+    paymentMethod: string;
+    transactionId?: string;
+    status: PaymentStatus;
+    createdAt: string;
+    updatedAt: string;
+    patientId?: number; // Assuming your backend might return this
+    doctorId?: number; // Assuming your backend might return this
 }
 
 // Define the Payments API slice
 export const PaymentsApi = createApi({
-    reducerPath: 'paymentsApi', 
+    reducerPath: 'paymentsApi',
     baseQuery: fetchBaseQuery({
-        baseUrl: 'http://localhost:5000/api/', 
+        baseUrl: 'http://localhost:5000/api/',
         prepareHeaders: (headers, { getState }) => {
             // Retrieve the authentication token from your Redux store
-            const token = (getState() as RootState).auth?.token; 
+            const token = (getState() as RootState).auth?.token;
             if (token) {
                 // Ensure the token is prefixed with 'Bearer'
                 const formattedToken = token.startsWith('Bearer') ? token : `Bearer ${token}`;
@@ -41,7 +43,7 @@ export const PaymentsApi = createApi({
     endpoints: (builder) => ({
         // Query to get all payments
         getPayments: builder.query<PaymentData[], void>({
-            query: () => 'payments', 
+            query: () => 'payments',
             providesTags: ['Payment'],
         }),
 
@@ -62,37 +64,37 @@ export const PaymentsApi = createApi({
                 body: {
                     ...newPaymentData,
                     paymentDate: new Date().toISOString(), // Set payment date on creation
-                    status: newPaymentData.status || 'Pending' 
+                    status: newPaymentData.status || 'pending'
                 },
             }),
-            invalidatesTags: ['Payment'], 
+            invalidatesTags: ['Payment'],
         }),
 
         // Mutation to update an existing payment
         updatePayment: builder.mutation<
-            PaymentData, 
-            Partial<PaymentData> & { paymentId: number } 
+            PaymentData,
+            Partial<PaymentData> & { paymentId: number }
         >({
             query: ({ paymentId, ...patch }) => ({
-                url: `payments/${paymentId}`, 
+                url: `payments/${paymentId}`,
                 method: 'PATCH',
-                body: patch, 
+                body: patch,
             }),
-            invalidatesTags: ['Payment'], 
+            invalidatesTags: ['Payment'],
         }),
 
         //delete a payment
-        deletePayment: builder.mutation<void, number>({ 
+        deletePayment: builder.mutation<void, number>({
             query: (paymentId) => ({
-                url: `payments/${paymentId}`, 
+                url: `payments/${paymentId}`,
                 method: 'DELETE',
             }),
             invalidatesTags: ['Payment'],
         }),
 
-        // Query to get payments by user ID
+        // Query to get payments by user ID (could be patient or doctor, more generic)
         getPaymentsByUserId: builder.query<PaymentData[], number>({
-            query: (userId) => `users/${userId}/payments`, // Assuming this endpoint exists
+            query: (userId) => `payments/user/${userId}`, // Assuming an endpoint like /api/payments/user/:userId
             providesTags: (result, _error, userId) =>
                 result
                     ? [
@@ -100,6 +102,30 @@ export const PaymentsApi = createApi({
                         ...result.map(({ paymentId }) => ({ type: 'Payment' as const, id: paymentId })),
                     ]
                     : [{ type: 'Payment', id: `LIST_BY_USER_${userId}` }],
+        }),
+
+        // New: Query to get payments by Patient ID
+        getPaymentsByPatientId: builder.query<PaymentData[], number>({
+            query: (patientId) => `payments/patient/${patientId}`, // Assuming an endpoint like /api/payments/patient/:patientId
+            providesTags: (result, _error, patientId) =>
+                result
+                    ? [
+                        { type: 'Payment', id: `LIST_BY_PATIENT_${patientId}` },
+                        ...result.map(({ paymentId }) => ({ type: 'Payment' as const, id: paymentId })),
+                    ]
+                    : [{ type: 'Payment', id: `LIST_BY_PATIENT_${patientId}` }],
+        }),
+
+        // New: Query to get payments by Doctor ID
+        getPaymentsByDoctorId: builder.query<PaymentData[], number>({
+            query: (doctorId) => `payments/doctor/${doctorId}`, // Assuming an endpoint like /api/payments/doctor/:doctorId
+            providesTags: (result, _error, doctorId) =>
+                result
+                    ? [
+                        { type: 'Payment', id: `LIST_BY_DOCTOR_${doctorId}` },
+                        ...result.map(({ paymentId }) => ({ type: 'Payment' as const, id: paymentId })),
+                    ]
+                    : [{ type: 'Payment', id: `LIST_BY_DOCTOR_${doctorId}` }],
         }),
     }),
 });
@@ -112,4 +138,6 @@ export const {
     useUpdatePaymentMutation,
     useDeletePaymentMutation,
     useGetPaymentsByUserIdQuery,
+    useGetPaymentsByPatientIdQuery, 
+    useGetPaymentsByDoctorIdQuery,
 } = PaymentsApi;

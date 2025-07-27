@@ -25,7 +25,7 @@ interface ChangePasswordFormValues {
     confirmNewPassword: string;
 }
 
-export const AdminProfile = () => {
+export const DoctorProfile = () => {
     const navigate = useNavigate();
     const { user, isAuthenticated, userType } = useSelector((state: RootState) => state.auth);
 
@@ -37,18 +37,10 @@ export const AdminProfile = () => {
 
     console.log("AdminProfile Debug: userId derived from Redux =", userId, "typeof userId =", typeof userId);
 
-    // ****************************************************************************************
-    // EDIT HERE: Add providesTags to useGetUserByIdQuery
-    // This tells RTK Query that this query provides data for the 'User' tag with its specific ID.
-    // When a mutation invalidates this tag, this query will automatically refetch.
+
     const { data: userDetails, isLoading, isError, error, isSuccess } = userApi.useGetUserByIdQuery(userId as number, {
         skip: !userId,
-        // Add providesTags to ensure this query is refetched when the 'User' tag is invalidated
-        // by mutations like updateUserProfile or updateUserProfileImage.
-        // It's already correctly defined in userApi.ts, but confirming it here visually.
-        // providesTags: (result, error, id) => [{ type: 'User', id }], // This is already in userApi.ts, no need to duplicate here
     });
-    // ****************************************************************************************
 
     console.log("AdminProfile Debug: RTK Query isLoading =", isLoading);
     console.log("AdminProfile Debug: RTK Query isError =", isError);
@@ -67,7 +59,6 @@ export const AdminProfile = () => {
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
     // Display Profile Picture Logic
-    // No change needed here, it correctly uses userDetails first, then user, then fallback
     const displayProfilePicture = userDetails?.profile_picture || user?.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(userDetails?.firstName || user?.firstName || '')}&background=4ade80&color=fff&size=128`;
 
     // Modal Toggles
@@ -92,8 +83,8 @@ export const AdminProfile = () => {
             navigate('/login');
         } else if (userType !== 'admin') {
             switch (userType) {
-                case 'doctor':
-                    navigate('/doctordashboard');
+                case 'admin':
+                    navigate('/admindashboard');
                     break;
                 case 'patient':
                     navigate('/patientdashboard');
@@ -146,7 +137,7 @@ export const AdminProfile = () => {
                 setImageProfile(userDetails.profile_picture);
             }
         }
-    }, [userDetails, reset, imageProfile]); // Added imageProfile to dependency array
+    }, [userDetails, reset, imageProfile]);
 
     // Profile Update Submission Handler
     const onSubmitProfile: SubmitHandler<ProfileFormValues> = async (data) => {
@@ -226,8 +217,6 @@ export const AdminProfile = () => {
                     const res = await updateUserProfileImage({ userId: userId, profile_picture: imageProfile }).unwrap();
                     toast.success(res.message || "Profile picture updated on server!", { id: loadingToastId });
                     console.log("Profile picture update response from backend:", res);
-                    // No need to manually refetch getUserByIdQuery here because providesTags/invalidatesTags handles it.
-                    // The `userDetails` from the query will automatically update after the invalidation.
                 } catch (error: any) {
                     console.error("Error saving profile image to backend:", error);
                     toast.error(error?.data?.message || "Failed to update profile image on server.", { id: loadingToastId });
@@ -237,7 +226,6 @@ export const AdminProfile = () => {
         updateProfileImageOnBackend();
     }, [imageProfile, userId, updateUserProfileImage]); // Dependency array
 
-    // --- Conditional Rendering based on data availability and loading state ---
     if (isLoading) {
         return (
             <div className="min-h-screen text-white py-10 px-5 flex items-center justify-center">
@@ -250,8 +238,6 @@ export const AdminProfile = () => {
         return (
             <div className="min-h-screen text-white py-10 px-5 flex items-center justify-center">
                 <p>Error loading user profile details. Please try again later.</p>
-                {/* Optional: Display more specific error message from RTK Query error object */}
-                {/* {error && <p className="text-red-500 text-sm">{JSON.stringify(error)}</p>} */}
             </div>
         );
     }
@@ -312,7 +298,7 @@ export const AdminProfile = () => {
                             <span className="font-bold">Password:</span> *****
                         </p>
                         <button
-                        className="btn bg-teal-600 hover:bg-emerald-600 text-white" // Corrected hover color
+                        className="btn bg-teal-600 hover:bg-emerald-600 text-white" 
                                onClick={handlePasswordModalToggle}
                                >
                                Change Password
@@ -320,6 +306,43 @@ export const AdminProfile = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Qualifications */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold mb-4">Professional Qualifications</h2>
+        <ul className="list-disc ml-6 text-gray-700">
+          <li>Cardiovascular diseases</li>
+          <li>Respiratory conditions</li>
+          <li>Diabetes and metabolic disorders</li>
+          <li>Infectious diseases</li>
+          <li>Wound care</li>
+        </ul>
+      </div>
+
+      {/* Certifications */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold mb-4">Certifications</h2>
+        <p className="text-gray-700">
+          Certified by [Certification Body]. Experience in general medicine, minor procedures, and preventative care.
+        </p>
+      </div>
+
+      {/* Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mt-8">
+        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h3 className="text-xl font-bold mb-4">Appointments</h3>
+          <div className="bg-gray-200 p-4 rounded-md text-center text-lg font-semibold">
+            No appointments
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+          <h3 className="text-xl font-bold mb-4">Payments</h3>
+          <div className="bg-gray-200 p-4 rounded-md text-center text-lg font-semibold">
+            N/L
+          </div>
+        </div>
+      </div>
 
             {/* Edit Profile Modal (controlled by isProfileModalOpen) */}
             {isProfileModalOpen && (
@@ -435,4 +458,4 @@ export const AdminProfile = () => {
     );
 };
 
-export default AdminProfile;
+export default DoctorProfile;

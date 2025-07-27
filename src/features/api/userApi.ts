@@ -1,135 +1,113 @@
 // src/features/api/userApi.ts
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { RootState } from "../../app/types";
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import type { RootState } from '../../app/types';
+import type { UserProfile } from '../../features/auth/authSlice';
+import type { BackendLoginResponse } from '../../types/auth';
 
-export type userType=  'admin' | 'doctor' | 'patient' ;
-
-export interface UserData{
-   userId: number,
-  firstName: string,
-  lastName: string,
-  email: string,
-  password: string,
-  contactPhone: string, 
-  address: string,
-  userType: userType,
-  createdAt: string,
-  updatedAt: string,
+export interface userData {
+  createdAt: any;
+  userType: string;
+  userId: number;
+  firstName: string;
+  lastName: string;
+  role: 'admin' | 'doctor' | 'patient';
+  email: string;
+  contactPhone?: string;
+  address?: string;
+  profile_picture?: string;
 }
 
 export const userApi = createApi({
-  reducerPath: "userApi",
-
+  reducerPath: 'userApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://localhost:5000/api/",
-
-    prepareHeaders: (headers, { getState, endpoint }) => {
-      // Only add Authorization header for protected endpoints
-      const publicEndpoints = ["loginUser", "registerUser"];
-      if (publicEndpoints.includes(endpoint)) {
-        return headers;
-      }
-
+    baseUrl: 'http://localhost:5000/api/',
+    prepareHeaders: (headers, { getState }) => {
       const token = (getState() as RootState).auth.token;
-
       if (token) {
-        const formattedToken = token.startsWith("Bearer")
-          ? token
-          : `Bearer ${token}`;
-        headers.set("Authorization", formattedToken);
-        console.log(
-          "Using token in API request:",
-          formattedToken.substring(0, 20) + "..."
-        );
-      } else {
-        console.log("No token available for API request");
+        // ✅ FIXED: Use standard capitalization
+        headers.set('Authorization', `Bearer ${token}`);
       }
-
       return headers;
     },
   }),
-
-  tagTypes: ["users", "user"],
-
+  tagTypes: ['User'],
   endpoints: (builder) => ({
-    // Authentication and login user
-    // getAllUsers:builder.query({
-    //   query:() => "users",
-    //   providesTags:["users"],
-    // }),
-    loginUser: builder.mutation({
-      query: (userLoginCredentials) => ({
-        url: "auth/login",
-        method: "POST",
-        body: userLoginCredentials,
+    loginUser: builder.mutation<BackendLoginResponse, { email: string; password: string }>({
+      query: (credentials) => ({
+        url: 'auth/login',
+        method: 'POST',
+        body: credentials,
       }),
     }),
 
-    registerUser: builder.mutation({
-      query: (userRegisterPayload) => ({
-        url: "auth/register",
-        method: "POST",
-        body: userRegisterPayload,
+    registerUser: builder.mutation<any, any>({
+      query: (userData) => ({
+        url: 'auth/register',
+        method: 'POST',
+        body: userData,
       }),
     }),
 
-    // Get one user by ID
-    getUserById: builder.query({
-      query: (user_id: number) => `users/${user_id}`,
-      providesTags: ["user"],
+    getUserById: builder.query<UserProfile, number>({
+      query: (userId) => `users/${userId}`,
+      providesTags: (_result, _error, id) => [{ type: 'User', id }],
     }),
 
-    // Get all user profiles
-    getAllUsersProfiles: builder.query({
-      query: () => "users",
-      providesTags: ["users"],
-    }),
-
-    // Get logged-in user's profile
-    getUserProfile: builder.query({
-      query: (userId: number) => `users/${userId}`,
-      providesTags: ["user"],
-    }),
-
-    // Update user profile (general info)
-    updateUserProfile: builder.mutation({
-      query: ({ user_id, ...patch }) => ({
-        url: `users/${user_id}`,
-        method: "PUT",
+    updateUserProfile: builder.mutation<
+      { message: string; user: UserProfile },
+      Partial<UserProfile> & { userId: number }
+    >({
+      query: ({ userId, ...patch }) => ({
+        url: `users/${userId}`,
+        method: 'PUT',
         body: patch,
       }),
-      invalidatesTags: ["user", "users"],
+      invalidatesTags: (_result, _error, { userId }) => [{ type: 'User', id: userId }],
     }),
 
-    // Update only the profile image
-    updateUserProfileImage: builder.mutation({
-      query: ({ user_id, profile_picture }) => ({
-        url: `users/${user_id}`,
-        method: "PUT",
+    updateUserProfileImage: builder.mutation<
+      { message: string; profile_picture: string },
+      { userId: number; profile_picture: string }
+    >({
+      query: ({ userId, profile_picture }) => ({
+        url: `users/${userId}/profile-picture`,
+        method: 'PUT',
         body: { profile_picture },
       }),
-      invalidatesTags: ["user", "users"],
+      invalidatesTags: (_result, _error, { userId }) => [{ type: 'User', id: userId }],
     }),
 
-    // Delete user profile
-    deleteUserprofile: builder.mutation({
-      query: ({ user_id }) => ({
-        url: `users/${user_id}`,
-        method: "DELETE",
+    changePassword: builder.mutation<
+      { message: string },
+      { userId: number; currentPassword: string; newPassword: string }
+    >({
+      query: ({ userId, currentPassword, newPassword }) => ({
+        url: `users/${userId}/change-password`,
+        method: 'PUT',
+        body: { currentPassword, newPassword },
       }),
-      invalidatesTags: ["user", "users"],
+      invalidatesTags: (_result, _error, { userId }) => [{ type: 'User', id: userId }],
+    }),
+
+    getAllUsersProfiles: builder.query<UserProfile[], void>({
+      query: () => 'users',
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ userId }) => ({ type: 'User' as const, id: userId })),
+              { type: 'User', id: 'LIST' },
+            ]
+          : [{ type: 'User', id: 'LIST' }],
     }),
   }),
 });
 
 export const {
- //useGetAllUsersQuery,
   useLoginUserMutation,
   useRegisterUserMutation,
   useGetUserByIdQuery,
-  useGetAllUsersProfilesQuery,
-  useGetUserProfileQuery,
   useUpdateUserProfileMutation,
   useUpdateUserProfileImageMutation,
-  useDeleteUserprofileMutation,
+  useChangePasswordMutation,
+  useGetAllUsersProfilesQuery,
 } = userApi;

@@ -1,12 +1,10 @@
 
-import React from 'react';
 import { FaUsers, FaDollarSign, FaUserMd, FaHospitalUser, FaCalendarCheck, FaPrescriptionBottleAlt, FaExclamationTriangle } from 'react-icons/fa';
-import { BiFoodMenu, BiSolidFoodMenu } from 'react-icons/bi'; 
 import {motion} from 'framer-motion';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
 import { DoctorsApi, type DoctorData } from '../../features/api/DoctorsApi';
-import { patientsApi, type PatientData } from '../../features/api/PatientsApi';
-import { userApi, type UserData } from '../../features/api/userApi';
+import { patientsApi } from '../../features/api/PatientsApi';
+import { userApi, type userData } from '../../features/api/userApi';
 import { AppointmentsApi, type AppointmentData } from '../../features/api/AppointmentsApi';
 import { complaintsApi, type ComplaintData } from '../../features/api/ComplaintsApi';
 import { PrescriptionsApi, type PrescriptionData } from '../../features/api/PrescriptionsApi';
@@ -33,7 +31,7 @@ export const ManagementHubPage = () =>{
     const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
      // Fetching data from your existing APIs
-     const { data: usersData = [], isLoading: isLoadingUsers } = userApi.useGetAllUsersProfilesQuery(undefined, {
+  const { data: usersData = [], isLoading: isLoadingUsers } = userApi.useGetAllUsersProfilesQuery(undefined, {
     skip: !isAuthenticated,
   });
   const { data: doctorsData = [], isLoading: isLoadingDoctors } = DoctorsApi.useGetDoctorsQuery(undefined, {
@@ -68,9 +66,9 @@ export const ManagementHubPage = () =>{
     // --- Data Processing for Summary Cards ---
       // Total Users & Breakdown
   const totalUsers = usersData.length;
-  const adminUsersCount = usersData.filter((user: UserData) => user.userType === 'admin').length;
-  const doctorUsersCount = usersData.filter((user: UserData) => user.userType === 'doctor').length;
-  const patientUsersCount = usersData.filter((user: UserData) => user.userType === 'patient').length;
+  const adminUsersCount = usersData.filter((user: any) => user.role === 'admin').length;
+  const doctorUsersCount = usersData.filter((user: any) => user.role === 'doctor').length;
+  const patientUsersCount = usersData.filter((user: any) => user.role === 'patient').length;
 
   // Total Doctors
   const totalDoctors = doctorsData.length;
@@ -135,7 +133,7 @@ export const ManagementHubPage = () =>{
     }));
 
   // 3. User Registration Trends (Line Chart) - Monthly
-  const userRegistrationsByMonth = usersData.reduce((acc: { [key: string]: number }, user: UserData) => {
+  const userRegistrationsByMonth = (usersData as userData[]).reduce((acc: { [key: string]: number }, user: userData) => {
     const month = user.createdAt.substring(0, 7);
     acc[month] = (acc[month] || 0) + 1;
     return acc;

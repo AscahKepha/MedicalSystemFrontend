@@ -1,5 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { clearCredentials } from "../features/auth/authSlice";
 
 interface LogoutProps {
   redirectPath?: string;
@@ -13,16 +15,12 @@ const Logout: React.FC<LogoutProps> = ({
   className = "bg-transparent hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded transition-colors text-lg"
 }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleLogout = () => {
-    // Clear local/session storage (tokens, user info)
-    localStorage.clear();
-    sessionStorage.clear();
+    // 1. Dispatch the Redux action to clear credentials
+    dispatch(clearCredentials());
 
-    // Optional: show a toast or alert
-    // alert("Logged out successfully");
-
-    // Redirect to login or home
     navigate(redirectPath);
   };
 

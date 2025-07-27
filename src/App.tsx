@@ -4,7 +4,6 @@ import { adminRoutes } from "./routes/AdminRoutes";
 import { doctorRoutes } from "./routes/DoctorRoutes";
 import { patientRoutes } from "./routes/PatientRoutes";
 
-// Error boundary component
 function RouteErrorBoundary() {
   const error = useRouteError();
   console.error(error);
@@ -18,24 +17,23 @@ function RouteErrorBoundary() {
   );
 }
 
-// Main app with router
 function App() {
   const router = createBrowserRouter([
     {
       ...userRoutes,
-      ErrorBoundary: RouteErrorBoundary,
+      errorElement: <RouteErrorBoundary />,
     },
     {
       ...doctorRoutes,
-      ErrorBoundary: RouteErrorBoundary,
+      errorElement: <RouteErrorBoundary />,
     },
     {
       ...patientRoutes,
-      ErrorBoundary: RouteErrorBoundary,
+      errorElement: <RouteErrorBoundary />,
     },
     {
       ...adminRoutes,
-      ErrorBoundary: RouteErrorBoundary,
+      errorElement: <RouteErrorBoundary />,
     },
   ]);
 

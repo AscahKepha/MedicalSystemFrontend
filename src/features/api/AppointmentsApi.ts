@@ -6,12 +6,17 @@ export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'resch
 
 // Define the AppointmentData interface
 export interface AppointmentData {
+    patientId: number;
     appointmentId: number; 
     userId: number; 
     doctorId: number; 
     appointmentDate: string;
+    timeSlot: string;
     appointmentTime: string;
     reason: string; 
+    totalAmount: string;
+    startTime: string;
+    endTime: string;
     status: AppointmentStatus;
     createdAt: string; 
     updatedAt: string; 
@@ -87,21 +92,21 @@ export const AppointmentsApi = createApi({
             invalidatesTags: (result, error, appointmentId) => [{ type: 'Appointment', id: appointmentId }, 'Appointment'], // Invalidate specific appointment and general list
         }),
 
-        // Query to get appointments by user ID
-        getAppointmentsByUserId: builder.query<AppointmentData[], number>({
-            query: (userId) => `appointments/${userId}`, 
-            providesTags: (result, _error, userId) =>
+        // Query to get appointments by patients ID
+        getAppointmentsByPatientId: builder.query<AppointmentData[], number>({
+            query: (patientId) => `patients/${patientId}/appointments`, 
+            providesTags: (result, _error, patientId) =>
                 result
                     ? [
-                        { type: 'Appointment', id: `LIST_BY_USER_${userId}` },
+                        { type: 'Appointment', id: `LIST_BY_USER_${patientId}` },
                         ...result.map(({ appointmentId }) => ({ type: 'Appointment' as const, id: appointmentId })),
                     ]
-                    : [{ type: 'Appointment', id: `LIST_BY_USER_${userId}` }],
+                    : [{ type: 'Appointment', id: `LIST_BY_USER_${patientId}` }],
         }),
 
         // Query to get appointments by doctor ID
         getAppointmentsByDoctorId: builder.query<AppointmentData[], number>({
-            query: (doctorId) => `appointments/${doctorId}`, 
+            query: (doctorId) => `doctors/${doctorId}/appointments`, 
             providesTags: (result, _error, doctorId) =>
                 result
                     ? [
@@ -120,6 +125,6 @@ export const {
     useAddAppointmentMutation,
     useUpdateAppointmentMutation,
     useDeleteAppointmentMutation,
-    useGetAppointmentsByUserIdQuery,
+    useGetAppointmentsByPatientIdQuery,
     useGetAppointmentsByDoctorIdQuery,
 } = AppointmentsApi;

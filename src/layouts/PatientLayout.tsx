@@ -1,45 +1,45 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import {
-  FaUserMd, FaUsers, FaCalendarAlt, FaClipboardList,
-  FaRegFileAlt, FaDonate, FaChartBar, FaCreditCard
+  FaHome,
+  FaUser,
+  FaCalendarAlt,
+  FaFilePrescription,
+  FaClipboardList,
+  FaCreditCard,
+  FaQuestionCircle,
+  FaUserMd
 } from 'react-icons/fa';
-import { IoSettingsOutline, IoPersonCircleOutline } from 'react-icons/io5';
+import NavbarP from '../components/patientdashboard/NavbarP'; // 👈 Imported your new Topbar
 
-import NavbarA from '../components/Admindashboard/NavbarA';
-import FooterA from '../components/Admindashboard/footerA';
-
-// Navigation items (excluding Admin Profile)
-const navItems = [
-  { to: 'management', icon: <IoSettingsOutline className="mr-3" />, label: 'Management Hub' },
-  { to: 'doctors', icon: <FaUserMd className="mr-3" />, label: 'Doctors' },
-  { to: 'patients', icon: <FaUsers className="mr-3" />, label: 'Patients' },
+const patientNavItems = [
+  { to: '.', icon: <FaHome className="mr-3" />, label: 'Dashboard' },
+  { to: 'profile', icon: <FaUser className="mr-3" />, label: 'User Profile' },
   { to: 'appointments', icon: <FaCalendarAlt className="mr-3" />, label: 'Appointments' },
-  { to: 'prescriptions', icon: <FaRegFileAlt className="mr-3" />, label: 'Prescriptions' },
+  { to: 'prescriptions', icon: <FaFilePrescription className="mr-3" />, label: 'Prescriptions' },
   { to: 'complaints', icon: <FaClipboardList className="mr-3" />, label: 'Complaints' },
-  { to: 'donations', icon: <FaDonate className="mr-3" />, label: 'Donations' },
-  { to: 'charts', icon: <FaChartBar className="mr-3" />, label: 'Charts' },
+  { to: 'find-doctor', icon: <FaUserMd className="mr-3" />, label: 'Find Doctor' },
+  { to: 'support', icon: <FaQuestionCircle className="mr-3" />, label: 'Help/Support' },
   { to: 'payments', icon: <FaCreditCard className="mr-3" />, label: 'Payments' },
-  { to: 'hr', icon: <IoPersonCircleOutline className="mr-3" />, label: 'Human Resource' },
 ];
 
-const AdminLayout: React.FC = () => {
+const PatientLayout: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="flex flex-col min-h-screen bg-gray-100">
       {/* Top Navbar */}
-      <NavbarA />
+      <NavbarP />
 
-      {/* Main content layout */}
-      <div className="flex pt-20">
+      <div className="flex flex-grow">
         {/* Sidebar */}
         <aside className="w-64 bg-white shadow-lg p-6 hidden md:flex flex-col">
-          <h2 className="text-3xl font-bold text-gray-800 mb-8">Admin Panel</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-8">Dashboard</h2>
           <nav className="flex-grow">
             <ul className="space-y-4">
-              {navItems.map((item) => (
+              {patientNavItems.map((item) => (
                 <li key={item.to}>
                   <NavLink
                     to={item.to}
+                    end
                     className={({ isActive }) =>
                       `flex items-center px-4 py-2 rounded-lg transition-colors text-lg font-medium ${
                         isActive
@@ -48,8 +48,7 @@ const AdminLayout: React.FC = () => {
                       }`
                     }
                   >
-                    {item.icon}
-                    {item.label}
+                    {item.icon} {item.label}
                   </NavLink>
                 </li>
               ))}
@@ -62,11 +61,8 @@ const AdminLayout: React.FC = () => {
           <Outlet />
         </main>
       </div>
-
-      {/* Footer */}
-      <FooterA />
     </div>
   );
 };
 
-export default AdminLayout;
+export default PatientLayout;

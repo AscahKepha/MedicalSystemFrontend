@@ -8,7 +8,7 @@ import {
   useAddAppointmentMutation,
   useUpdateAppointmentMutation,
   useDeleteAppointmentMutation,
-  useGetAppointmentsByUserIdQuery,
+  useGetAppointmentsByPatientIdQuery,
   useGetAppointmentsByDoctorIdQuery,
 } from '../../features/api/AppointmentsApi'; // Adjust this path to your actual AppointmentsApi.ts
 
@@ -341,9 +341,9 @@ const ViewAppointmentModal = ({ appointmentId, onClose }: ViewAppointmentModalPr
             <p><strong>Time:</strong> {appointment.appointmentTime}</p>
             <p><strong>Reason:</strong> {appointment.reason}</p>
             <p><strong>Status:</strong> <span className={`font-semibold ${
-              appointment.status === 'Scheduled' ? 'text-blue-600' :
-              appointment.status === 'Completed' ? 'text-green-600' :
-              appointment.status === 'Cancelled' ? 'text-red-600' :
+              appointment.status === 'scheduled' ? 'text-blue-600' :
+              appointment.status === 'completed' ? 'text-green-600' :
+              appointment.status === 'cancelled' ? 'text-red-600' :
               'text-orange-600'
             }`}>{appointment.status}</span></p>
             <p><strong>Created At:</strong> {new Date(appointment.createdAt).toLocaleString()}</p>
@@ -461,9 +461,9 @@ export const AllAppointments = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 truncate max-w-xs">{appointment.reason}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        appointment.status === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
-                        appointment.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                        appointment.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                        appointment.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                        appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                         'bg-orange-100 text-orange-800'
                       }`}>
                         {appointment.status}
