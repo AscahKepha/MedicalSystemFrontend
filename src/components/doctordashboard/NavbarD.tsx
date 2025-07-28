@@ -67,11 +67,12 @@ export const NavbarD: React.FC = () => {
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 w-40 bg-white rounded shadow-md z-50">
                   <a
-                    href="/doctordashboard"
+                    href="/doctordashboard/profile"
                     className="block px-4 py-2 text-gray-800 hover:bg-gray-100"
                   >
                     Profile
                   </a>
+
 
                   <div className="border-t border-gray-200" />
                   <Logout />

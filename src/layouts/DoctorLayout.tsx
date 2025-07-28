@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import {
-  FaUser,
+  // FaUser,
   FaCalendarAlt,
   FaRegFileAlt,
   FaClipboardList,
@@ -15,7 +15,7 @@ import FooterD from '../components/doctordashboard/FooterD';
 
 const doctorNavItems = [
   { to: '.', icon: <FaHome className="mr-3" />, label: 'Dashboard' },
-  { to: 'profile', icon: <FaUser className="mr-3" />, label: 'User Profile' },
+  // { to: 'profile', icon: <FaUser className="mr-3" />, label: 'User Profile' },
   { to: 'appointments', icon: <FaCalendarAlt className="mr-3" />, label: 'Appointments' },
   { to: 'prescriptions', icon: <FaRegFileAlt className="mr-3" />, label: 'Prescriptions' },
   { to: 'complaints', icon: <FaClipboardList className="mr-3" />, label: 'Complaints' },

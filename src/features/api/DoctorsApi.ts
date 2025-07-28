@@ -3,6 +3,9 @@ import { type RootState } from "../../app/types";
 
 
 export interface DoctorData{
+    availability: any;
+    availableTime: ReactNode;
+    availableDays: any;
     doctorId: number;
     userId?: number;
     firstName: string;

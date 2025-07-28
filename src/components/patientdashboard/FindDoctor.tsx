@@ -1,10 +1,15 @@
-// src/pages/patient/FindDoctor.tsx
-import React from 'react';
-import { useGetDoctorsQuery } from '../../features/api/DoctorsApi'; // Adjust the path if needed
-import { FaUserMd, FaPhone, FaStethoscope } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { useGetDoctorsQuery } from '../../features/api/DoctorsApi';
+import { FaUserMd, FaPhone, FaStethoscope, FaCalendarAlt } from 'react-icons/fa';
+import BookAppointmentModal from './BookAppointmentModal'; // <-- Create this file from the previous code
 
 const FindDoctor: React.FC = () => {
   const { data: doctors, isLoading, isError } = useGetDoctorsQuery();
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
+  const [isBookingOpen, setBookingOpen] = useState(false);
+
+  // You may get this from Redux/authSlice if available
+  const patientId = 1; // 🔁 Replace this with the actual logged-in patient ID
 
   if (isLoading) return <p className="text-gray-600">Loading doctors...</p>;
   if (isError) return <p className="text-red-500">Failed to load doctors.</p>;
@@ -30,14 +35,56 @@ const FindDoctor: React.FC = () => {
                 <p className="text-sm text-gray-600 flex items-center gap-1">
                   <FaPhone className="text-gray-500" /> {doc.contactPhone}
                 </p>
+                <p className="text-sm text-gray-600 flex items-center gap-1">
+                  <span
+                    className={`w-2 h-2 rounded-full mr-2 ${
+                      doc.isAvailable ? 'bg-green-500' : 'bg-red-500'
+                    }`}
+                  ></span>
+                  {doc.isAvailable ? 'Available' : 'Not Available'}
+                </p>
               </div>
             </div>
-            <button className="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-              Book Appointment
+
+            {/* Availability Section */}
+            {doc.availability?.length > 0 && (
+              <div className="mt-4 text-sm text-gray-700">
+                <div className="font-medium text-blue-600 flex items-center gap-1 mb-1">
+                  <FaCalendarAlt /> Schedule:
+                </div>
+                <ul className="ml-4 list-disc space-y-1">
+                  {doc.availability.map((slot: any, index: number) => (
+                    <li key={index}>
+                      <span className="font-medium">{slot.day}</span>: {slot.start} - {slot.end}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <button
+              className="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+              disabled={!doc.isAvailable}
+              onClick={() => {
+                setSelectedDoctor(doc);
+                setBookingOpen(true);
+              }}
+            >
+              {doc.isAvailable ? 'Book Appointment' : 'Unavailable'}
             </button>
           </div>
         ))}
       </div>
+
+      {/* Booking Modal */}
+      {selectedDoctor && (
+        <BookAppointmentModal
+          isOpen={isBookingOpen}
+          onClose={() => setBookingOpen(false)}
+          doctor={selectedDoctor}
+          patientId={patientId}
+        />
+      )}
     </div>
   );
 };
