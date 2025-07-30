@@ -138,7 +138,7 @@ const PatientProfile = () => {
           onEditClick={() => setIsProfileModalOpen(true)}
         />
 
-        <div className="w-96 h-96 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="w-100 h-80 grid grid-cols-1 md:grid-cols-2 gap-6">
           <ProfileDetails
             userDetails={userDetails}
             onChangePasswordClick={() => setIsPasswordModalOpen(true)}
