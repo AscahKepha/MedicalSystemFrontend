@@ -1,5 +1,5 @@
 // src/components/doctordashboard/DoctorsPrescription.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Import useEffect
 import { useSelector } from 'react-redux';
 import {
   useGetPrescriptionsByDoctorIdQuery,
@@ -11,6 +11,67 @@ import {
 } from '../../features/api/PrescriptionsApi';
 import type { RootState } from '../../app/types';
 
+// Reusable Input Field Component
+interface InputFieldProps {
+  label: string;
+  id: string;
+  name: string;
+  type: string;
+  value: string | number;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  required?: boolean;
+  placeholder?: string;
+  rows?: number;
+  step?: string;
+  isTextArea?: boolean;
+}
+
+const InputField: React.FC<InputFieldProps> = ({
+  label,
+  id,
+  name,
+  type,
+  value,
+  onChange,
+  required = false,
+  placeholder = '',
+  rows = 1,
+  step,
+  isTextArea = false,
+}) => (
+  <div>
+    <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
+      {label}
+      {required && <span className="text-red-500">*</span>}
+    </label>
+    {isTextArea ? (
+      <textarea
+        id={id}
+        name={name}
+        rows={rows}
+        value={value}
+        onChange={onChange}
+        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+        required={required}
+        placeholder={placeholder}
+      ></textarea>
+    ) : (
+      <input
+        type={type}
+        id={id}
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+        required={required}
+        placeholder={placeholder}
+        step={step}
+      />
+    )}
+  </div>
+);
+
+// Prescription Form State Interface
 interface PrescriptionFormState {
   prescriptionId: number | null;
   patientId: string;
@@ -30,7 +91,6 @@ export const DoctorsPrescription: React.FC = () => {
   // ALL HOOKS MUST BE DECLARED AT THE TOP LEVEL, UNCONDITIONALLY
   // -----------------------------------------------------------
 
-  // Get the logged-in doctor's specific ID
   const userId = useSelector((state: RootState) => state.auth.user?.userId);
 
   const {
@@ -56,7 +116,6 @@ export const DoctorsPrescription: React.FC = () => {
   const [updatePrescription, { isLoading: isUpdating }] = useUpdatePrescriptionMutation();
   const [deletePrescription, { isLoading: isDeleting }] = useDeletePrescriptionMutation();
 
-  // State for the new prescription form
   const [newPrescription, setNewPrescription] = useState<PrescriptionFormState>({
     prescriptionId: null,
     patientId: '',
@@ -71,24 +130,23 @@ export const DoctorsPrescription: React.FC = () => {
     doctorId: doctorId?.toString() || '',
   });
 
-  // State for editing a prescription
   const [editingPrescription, setEditingPrescription] = useState<PrescriptionFormState | null>(null);
-
-  // State for alert messages
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-
-  // State for confirmation modal
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [prescriptionToDelete, setPrescriptionToDelete] = useState<number | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
-  // NEW STATE: Control visibility of the "Create Prescription" form modal
-  const [showCreateForm, setShowCreateForm] = useState(false); // Initially hidden
+  // Update newPrescription.doctorId when doctorId becomes available
+  useEffect(() => {
+    if (doctorId && newPrescription.doctorId === '') {
+      setNewPrescription((prev) => ({ ...prev, doctorId: doctorId.toString() }));
+    }
+  }, [doctorId, newPrescription.doctorId]);
 
   // -----------------------------------------------------------
   // END OF HOOK DECLARATIONS
   // -----------------------------------------------------------
 
-  // Utility function to show a temporary message
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
     setTimeout(() => {
@@ -96,7 +154,6 @@ export const DoctorsPrescription: React.FC = () => {
     }, 5000);
   };
 
-  // Handle form input changes for new prescription
   const handleNewPrescriptionChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -104,7 +161,6 @@ export const DoctorsPrescription: React.FC = () => {
     setNewPrescription((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle form input changes for editing prescription
   const handleEditPrescriptionChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -117,7 +173,6 @@ export const DoctorsPrescription: React.FC = () => {
     }
   };
 
-  // Submit new prescription
   const handleCreatePrescription = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -148,12 +203,12 @@ export const DoctorsPrescription: React.FC = () => {
         totalAmount: newPrescription.totalAmount ? parseFloat(newPrescription.totalAmount) : null,
         issueDate: newPrescription.issueDate,
         expiryDate: newPrescription.expiryDate || null,
-         patient: undefined,
-        doctor: undefined
+        patient: undefined, // Explicitly set to undefined as per your original code
+        doctor: undefined, // Explicitly set to undefined as per your original code
       };
       await addPrescription(payload).unwrap();
       showMessage('success', 'Prescription created successfully!');
-      setNewPrescription({ // Reset form fields
+      setNewPrescription({
         prescriptionId: null,
         patientId: '',
         appointmentId: '',
@@ -166,14 +221,13 @@ export const DoctorsPrescription: React.FC = () => {
         expiryDate: '',
         doctorId: doctorId.toString() || '',
       });
-      setShowCreateForm(false); // Close the modal on success
+      setShowCreateForm(false);
     } catch (err) {
       console.error('Error creating prescription:', err);
       showMessage('error', 'Failed to create prescription. Please check the inputs and try again.');
     }
   };
 
-  // Open edit modal/form
   const handleEditClick = (prescription: PrescriptionData) => {
     if (prescription.prescriptionId === null || typeof prescription.prescriptionId === 'undefined') {
       showMessage('error', 'Cannot edit: Prescription ID is missing.');
@@ -195,7 +249,6 @@ export const DoctorsPrescription: React.FC = () => {
     });
   };
 
-  // Submit updated prescription
   const handleUpdatePrescription = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPrescription) return;
@@ -218,10 +271,10 @@ export const DoctorsPrescription: React.FC = () => {
         totalAmount: editingPrescription.totalAmount ? parseFloat(editingPrescription.totalAmount) : null,
         issueDate: editingPrescription.issueDate,
         expiryDate: editingPrescription.expiryDate || null,
-        createdAt: new Date().toISOString(), // Placeholder - adjust if your API handles this
+        createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         patient: undefined,
-        doctor: undefined
+        doctor: undefined,
       };
       await updatePrescription(payload).unwrap();
       showMessage('success', 'Prescription updated successfully!');
@@ -232,13 +285,11 @@ export const DoctorsPrescription: React.FC = () => {
     }
   };
 
-  // Prepare for deletion (show confirmation modal)
   const handleDeleteClick = (prescriptionId: number) => {
     setPrescriptionToDelete(prescriptionId);
     setShowConfirmModal(true);
   };
 
-  // Confirm and delete prescription
   const confirmDeletePrescription = async () => {
     if (prescriptionToDelete === null) return;
     try {
@@ -253,7 +304,7 @@ export const DoctorsPrescription: React.FC = () => {
     }
   };
 
-  // Access check: If not a doctor or no doctorId, show access denied message
+  // Access check and loading states
   if (!doctorId || userType !== 'doctor') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
@@ -266,19 +317,17 @@ export const DoctorsPrescription: React.FC = () => {
     );
   }
 
-  // Loading/Error states for the main prescription display
-  // These can come after the unconditional hook calls.
   if (isLoadingPrescriptions || isFetchingPrescriptions || isLoadingDoctorId) {
-    return <p className="text-center text-gray-600 text-lg">Loading your prescriptions...</p>;
+    return <div className="text-center text-gray-600 text-lg p-8">Loading your prescriptions...</div>;
   }
 
   if (prescriptionsError || doctorIdError) {
     return (
-      <div className="text-center text-red-600 text-lg">
+      <div className="text-center text-red-600 text-lg p-8">
         Error loading prescriptions.
         <button
           onClick={() => refetchPrescriptions()}
-          className="ml-4 bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
+          className="ml-4 bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           Retry
         </button>
@@ -286,259 +335,235 @@ export const DoctorsPrescription: React.FC = () => {
     );
   }
 
-  const prescriptions = prescriptionsData ?? []; // Ensure prescriptions is always an array
+  const prescriptions = prescriptionsData ?? [];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 font-inter">
-      <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-md p-6 sm:p-10">
-        <h1 className="text-3xl sm:text-4xl font-bold text-center mb-8 text-blue-900">
-          My Prescriptions
-        </h1>
+    <div className="min-h-screen bg-gray-100 p-4 sm:p-6 font-inter">
+      <div className="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6 sm:p-10">
+        <header className="text-center mb-10">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-blue-900 mb-4">
+            My Prescriptions Dashboard
+          </h1>
+          <p className="text-lg text-gray-600">
+            Effortlessly manage patient prescriptions.
+          </p>
+        </header>
 
-        {/* Add New Prescription Button */}
-        <div className="text-center mb-8">
+        {/* Action Buttons Section */}
+        <section className="text-center mb-8">
           <button
             onClick={() => setShowCreateForm(true)}
-            className="bg-blue-600 text-white py-3 px-6 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="bg-green-600 text-white py-3 px-8 rounded-full shadow-lg hover:bg-green-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
           >
-            + Add New Prescription
+            + Create New Prescription
           </button>
-        </div>
+        </section>
 
         {/* Message Display */}
         {message && (
           <div
-            className={`p-3 mb-4 rounded-md text-center font-medium ${
+            className={`p-4 mb-6 rounded-lg text-center font-semibold text-lg ${
               message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-            }`}
+            } shadow-md`}
+            role="alert"
           >
             {message.text}
           </div>
         )}
 
-        {/* View Prescriptions Section */}
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-          My Created Prescriptions
-        </h2>
+        {/* Prescriptions List Section */}
+        <section>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-3">
+            Your Issued Prescriptions ({prescriptions.length})
+          </h2>
 
-        {prescriptions.length === 0 ? (
-          <p className="text-center text-gray-600 text-lg">
-            You have not created any prescriptions yet.
-          </p>
-        ) : (
-          <div className="space-y-6">
-            {prescriptions.map((prescription: PrescriptionData) => (
-              <div
-                key={prescription.prescriptionId}
-                className="border border-gray-200 rounded-lg p-5 hover:shadow transition"
-              >
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2">
-                  <h3 className="text-xl font-semibold text-gray-800">
-                    {prescription.medicationName}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                      Patient ID: {prescription.patientId}
-                    </span>
-                    {prescription.appointmentId && (
-                      <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
-                        Appt ID: {prescription.appointmentId}
+          {prescriptions.length === 0 ? (
+            <div className="bg-blue-50 p-6 rounded-lg text-center text-blue-700 text-lg border border-blue-200">
+              <p>You haven't issued any prescriptions yet. Click "Create New Prescription" to get started!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {prescriptions.map((prescription: PrescriptionData) => (
+                <article
+                  key={prescription.prescriptionId}
+                  className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 flex flex-col hover:shadow-md transition-shadow duration-200 ease-in-out"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-xl font-bold text-blue-800">
+                      {prescription.medicationName}
+                    </h3>
+                    <div className="flex-shrink-0">
+                      <span className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full mr-2">
+                        PID: {prescription.patientId}
                       </span>
+                      {prescription.appointmentId && (
+                        <span className="bg-purple-100 text-purple-800 text-sm font-medium px-3 py-1 rounded-full">
+                          AID: {prescription.appointmentId}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-gray-700 text-sm mb-4 flex-grow">
+                    <p className="mb-1">
+                      <strong className="text-gray-900">Dosage:</strong> {prescription.dosage}
+                    </p>
+                    <p className="mb-1">
+                      <strong className="text-gray-900">Instructions:</strong> {prescription.instructions}
+                    </p>
+                    {prescription.notes && (
+                      <p className="mb-1">
+                        <strong className="text-gray-900">Notes:</strong> {prescription.notes}
+                      </p>
+                    )}
+                    {prescription.totalAmount !== null && (
+                      <p className="mb-1">
+                        <strong className="text-gray-900">Amount:</strong> Ksh {prescription.totalAmount?.toFixed(2)}
+                      </p>
                     )}
                   </div>
-                </div>
-                <p className="text-gray-700 mb-1">
-                  <span className="font-medium">Dosage:</span> {prescription.dosage}
-                </p>
-                <p className="text-gray-700 mb-1">
-                  <span className="font-medium">Instructions:</span> {prescription.instructions}
-                </p>
-                {prescription.notes && (
-                  <p className="text-gray-700 mb-1">
-                    <span className="font-medium">Notes:</span> {prescription.notes}
-                  </p>
-                )}
-                {prescription.totalAmount !== null && (
-                  <p className="text-gray-700 mb-1">
-                    <span className="font-medium">Amount:</span> Ksh {prescription.totalAmount?.toFixed(2)}
-                  </p>
-                )}
-                <p className="text-sm text-gray-500">
-                  Issued: {new Date(prescription.issueDate).toLocaleDateString()}
-                  {prescription.expiryDate && (
-                    <span> | Expires: {new Date(prescription.expiryDate).toLocaleDateString()}</span>
-                  )}
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Created: {new Date(prescription.createdAt).toLocaleDateString()}
-                  {prescription.updatedAt && prescription.updatedAt !== prescription.createdAt && (
-                    <span> | Last Updated: {new Date(prescription.updatedAt).toLocaleDateString()}</span>
-                  )}
-                </p>
-                <div className="flex justify-end gap-3 mt-4">
-                  <button
-                    onClick={() => handleEditClick(prescription)}
-                    className="bg-yellow-500 text-white px-4 py-2 rounded-md text-sm hover:bg-yellow-600 disabled:opacity-50"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteClick(prescription.prescriptionId)}
-                    className="bg-red-500 text-white px-4 py-2 rounded-md text-sm hover:bg-red-600 disabled:opacity-50"
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? 'Deleting...' : 'Delete'}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+
+                  <div className="text-xs text-gray-500 mt-auto pt-4 border-t border-gray-100">
+                    <p>Issued: {new Date(prescription.issueDate).toLocaleDateString()}</p>
+                    {prescription.expiryDate && (
+                      <p>Expires: {new Date(prescription.expiryDate).toLocaleDateString()}</p>
+                    )}
+                    <p>Created: {new Date(prescription.createdAt).toLocaleDateString()}</p>
+                    {prescription.updatedAt && prescription.updatedAt !== prescription.createdAt && (
+                      <p>Last Updated: {new Date(prescription.updatedAt).toLocaleDateString()}</p>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end gap-3 mt-5">
+                    <button
+                      onClick={() => handleEditClick(prescription)}
+                      className="bg-yellow-500 text-white px-5 py-2 rounded-md text-sm hover:bg-yellow-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:opacity-50"
+                      disabled={isUpdating}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClick(prescription.prescriptionId)}
+                      className="bg-red-500 text-white px-5 py-2 rounded-md text-sm hover:bg-red-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50"
+                      disabled={isDeleting}
+                    >
+                      {isDeleting && prescriptionToDelete === prescription.prescriptionId ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
 
-      {/* Create Prescription Modal/Form */}
+      {/* Create Prescription Modal */}
       {showCreateForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-8 shadow-xl max-w-lg w-full">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-lg p-8 shadow-2xl max-w-2xl w-full my-8 animate-fade-in-up">
             <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
               Create New Prescription
             </h2>
-            <form onSubmit={handleCreatePrescription} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="patientId" className="block text-sm font-medium text-gray-700 mb-1">
-                  Patient ID<span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  id="patientId"
-                  name="patientId"
-                  value={newPrescription.patientId}
-                  onChange={handleNewPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="appointmentId" className="block text-sm font-medium text-gray-700 mb-1">
-                  Appointment ID (Optional)
-                </label>
-                <input
-                  type="number"
-                  id="appointmentId"
-                  name="appointmentId"
-                  value={newPrescription.appointmentId}
-                  onChange={handleNewPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., 123"
-                />
-              </div>
-              <div>
-                <label htmlFor="medicationName" className="block text-sm font-medium text-gray-700 mb-1">
-                  Medication Name<span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="medicationName"
-                  name="medicationName"
-                  value={newPrescription.medicationName}
-                  onChange={handleNewPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="dosage" className="block text-sm font-medium text-gray-700 mb-1">
-                  Dosage<span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="dosage"
-                  name="dosage"
-                  value={newPrescription.dosage}
-                  onChange={handleNewPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
+            <form onSubmit={handleCreatePrescription} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+              <InputField
+                label="Patient ID"
+                id="patientId"
+                name="patientId"
+                type="number"
+                value={newPrescription.patientId}
+                onChange={handleNewPrescriptionChange}
+                required
+              />
+              <InputField
+                label="Appointment ID (Optional)"
+                id="appointmentId"
+                name="appointmentId"
+                type="number"
+                value={newPrescription.appointmentId}
+                onChange={handleNewPrescriptionChange}
+                placeholder="e.g., 123"
+              />
+              <InputField
+                label="Medication Name"
+                id="medicationName"
+                name="medicationName"
+                type="text"
+                value={newPrescription.medicationName}
+                onChange={handleNewPrescriptionChange}
+                required
+              />
+              <InputField
+                label="Dosage"
+                id="dosage"
+                name="dosage"
+                type="text"
+                value={newPrescription.dosage}
+                onChange={handleNewPrescriptionChange}
+                required
+              />
               <div className="md:col-span-2">
-                <label htmlFor="instructions" className="block text-sm font-medium text-gray-700 mb-1">
-                  Instructions<span className="text-red-500">*</span>
-                </label>
-                <textarea
+                <InputField
+                  label="Instructions"
                   id="instructions"
                   name="instructions"
-                  rows={3}
+                  type="text"
                   value={newPrescription.instructions}
                   onChange={handleNewPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   required
-                ></textarea>
+                  rows={3}
+                  isTextArea
+                />
               </div>
               <div className="md:col-span-2">
-                <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
-                  Notes
-                </label>
-                <textarea
+                <InputField
+                  label="Notes"
                   id="notes"
                   name="notes"
-                  rows={2}
+                  type="text"
                   value={newPrescription.notes}
                   onChange={handleNewPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                ></textarea>
-              </div>
-              <div>
-                <label htmlFor="totalAmount" className="block text-sm font-medium text-gray-700 mb-1">
-                  Total Amount (Optional)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  id="totalAmount"
-                  name="totalAmount"
-                  value={newPrescription.totalAmount}
-                  onChange={handleNewPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  rows={2}
+                  isTextArea
                 />
               </div>
-              <div>
-                <label htmlFor="issueDate" className="block text-sm font-medium text-gray-700 mb-1">
-                  Issue Date<span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  id="issueDate"
-                  name="issueDate"
-                  value={newPrescription.issueDate}
-                  onChange={handleNewPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700 mb-1">
-                  Expiry Date (Optional)
-                </label>
-                <input
-                  type="date"
-                  id="expiryDate"
-                  name="expiryDate"
-                  value={newPrescription.expiryDate}
-                  onChange={handleNewPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
+              <InputField
+                label="Total Amount (Optional)"
+                id="totalAmount"
+                name="totalAmount"
+                type="number"
+                step="0.01"
+                value={newPrescription.totalAmount}
+                onChange={handleNewPrescriptionChange}
+              />
+              <InputField
+                label="Issue Date"
+                id="issueDate"
+                name="issueDate"
+                type="date"
+                value={newPrescription.issueDate}
+                onChange={handleNewPrescriptionChange}
+                required
+              />
+              <InputField
+                label="Expiry Date (Optional)"
+                id="expiryDate"
+                name="expiryDate"
+                type="date"
+                value={newPrescription.expiryDate}
+                onChange={handleNewPrescriptionChange}
+              />
+
               <div className="md:col-span-2 flex justify-end gap-3 mt-6">
                 <button
-                  type="button" // Important: set type="button" to prevent form submission
+                  type="button"
                   onClick={() => setShowCreateForm(false)}
-                  className="bg-gray-300 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-400"
+                  className="bg-gray-300 text-gray-800 py-2 px-5 rounded-md hover:bg-gray-400 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
+                  className="bg-green-600 text-white py-2 px-5 rounded-md hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isAdding}
                 >
                   {isAdding ? 'Creating...' : 'Create Prescription'}
@@ -549,149 +574,113 @@ export const DoctorsPrescription: React.FC = () => {
         </div>
       )}
 
-      {/* Edit Prescription Modal/Form */}
+      {/* Edit Prescription Modal */}
       {editingPrescription && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-8 shadow-xl max-w-lg w-full">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-lg p-8 shadow-2xl max-w-2xl w-full my-8 animate-fade-in-up">
             <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
               Edit Prescription
             </h2>
-            <form onSubmit={handleUpdatePrescription} className="grid grid-cols-1 gap-4">
-              <div>
-                <label htmlFor="editPatientId" className="block text-sm font-medium text-gray-700 mb-1">
-                  Patient ID
-                </label>
-                <input
-                  type="number"
-                  id="editPatientId"
-                  name="patientId"
-                  value={editingPrescription.patientId}
-                  onChange={handleEditPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="editAppointmentId" className="block text-sm font-medium text-gray-700 mb-1">
-                  Appointment ID (Optional)
-                </label>
-                <input
-                  type="number"
-                  id="editAppointmentId"
-                  name="appointmentId"
-                  value={editingPrescription.appointmentId || ''}
-                  onChange={handleEditPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., 123"
-                />
-              </div>
-              <div>
-                <label htmlFor="editMedicationName" className="block text-sm font-medium text-gray-700 mb-1">
-                  Medication Name
-                </label>
-                <input
-                  type="text"
-                  id="editMedicationName"
-                  name="medicationName"
-                  value={editingPrescription.medicationName}
-                  onChange={handleEditPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="editDosage" className="block text-sm font-medium text-gray-700 mb-1">
-                  Dosage
-                </label>
-                <input
-                  type="text"
-                  id="editDosage"
-                  name="dosage"
-                  value={editingPrescription.dosage}
-                  onChange={handleEditPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="editInstructions" className="block text-sm font-medium text-gray-700 mb-1">
-                  Instructions
-                </label>
-                <textarea
+            <form onSubmit={handleUpdatePrescription} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+              <InputField
+                label="Patient ID"
+                id="editPatientId"
+                name="patientId"
+                type="number"
+                value={editingPrescription.patientId}
+                onChange={handleEditPrescriptionChange}
+                required
+              />
+              <InputField
+                label="Appointment ID (Optional)"
+                id="editAppointmentId"
+                name="appointmentId"
+                type="number"
+                value={editingPrescription.appointmentId || ''}
+                onChange={handleEditPrescriptionChange}
+                placeholder="e.g., 123"
+              />
+              <InputField
+                label="Medication Name"
+                id="editMedicationName"
+                name="medicationName"
+                type="text"
+                value={editingPrescription.medicationName}
+                onChange={handleEditPrescriptionChange}
+                required
+              />
+              <InputField
+                label="Dosage"
+                id="editDosage"
+                name="dosage"
+                type="text"
+                value={editingPrescription.dosage}
+                onChange={handleEditPrescriptionChange}
+                required
+              />
+              <div className="md:col-span-2">
+                <InputField
+                  label="Instructions"
                   id="editInstructions"
                   name="instructions"
-                  rows={3}
+                  type="text"
                   value={editingPrescription.instructions}
                   onChange={handleEditPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   required
-                ></textarea>
+                  rows={3}
+                  isTextArea
+                />
               </div>
-              <div>
-                <label htmlFor="editNotes" className="block text-sm font-medium text-gray-700 mb-1">
-                  Notes
-                </label>
-                <textarea
+              <div className="md:col-span-2">
+                <InputField
+                  label="Notes"
                   id="editNotes"
                   name="notes"
-                  rows={2}
+                  type="text"
                   value={editingPrescription.notes}
                   onChange={handleEditPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                ></textarea>
-              </div>
-              <div>
-                <label htmlFor="editTotalAmount" className="block text-sm font-medium text-gray-700 mb-1">
-                  Total Amount
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  id="editTotalAmount"
-                  name="totalAmount"
-                  value={editingPrescription.totalAmount}
-                  onChange={handleEditPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  rows={2}
+                  isTextArea
                 />
               </div>
-              <div>
-                <label htmlFor="editIssueDate" className="block text-sm font-medium text-gray-700 mb-1">
-                  Issue Date
-                </label>
-                <input
-                  type="date"
-                  id="editIssueDate"
-                  name="issueDate"
-                  value={editingPrescription.issueDate}
-                  onChange={handleEditPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="editExpiryDate" className="block text-sm font-medium text-gray-700 mb-1">
-                  Expiry Date (Optional)
-                </label>
-                <input
-                  type="date"
-                  id="editExpiryDate"
-                  name="expiryDate"
-                  value={editingPrescription.expiryDate || ''}
-                  onChange={handleEditPrescriptionChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div className="flex justify-end gap-3 mt-6">
+              <InputField
+                label="Total Amount"
+                id="editTotalAmount"
+                name="totalAmount"
+                type="number"
+                step="0.01"
+                value={editingPrescription.totalAmount}
+                onChange={handleEditPrescriptionChange}
+              />
+              <InputField
+                label="Issue Date"
+                id="editIssueDate"
+                name="issueDate"
+                type="date"
+                value={editingPrescription.issueDate}
+                onChange={handleEditPrescriptionChange}
+                required
+              />
+              <InputField
+                label="Expiry Date (Optional)"
+                id="editExpiryDate"
+                name="expiryDate"
+                type="date"
+                value={editingPrescription.expiryDate || ''}
+                onChange={handleEditPrescriptionChange}
+              />
+
+              <div className="md:col-span-2 flex justify-end gap-3 mt-6">
                 <button
                   type="button"
                   onClick={() => setEditingPrescription(null)}
-                  className="bg-gray-300 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-400 disabled:opacity-50"
+                  className="bg-gray-300 text-gray-800 py-2 px-5 rounded-md hover:bg-gray-400 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                  className="bg-blue-600 text-white py-2 px-5 rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isUpdating}
                 >
                   {isUpdating ? 'Updating...' : 'Save Changes'}
@@ -704,24 +693,25 @@ export const DoctorsPrescription: React.FC = () => {
 
       {/* Confirmation Modal */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-8 shadow-xl max-w-sm w-full text-center">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Confirm Deletion</h3>
-            <p className="text-gray-700 mb-6">
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-8 shadow-2xl max-w-sm w-full text-center animate-fade-in-up">
+            <h3 className="text-2xl font-bold text-red-700 mb-4">Confirm Deletion</h3>
+            <p className="text-gray-700 mb-6 text-lg">
               Are you sure you want to delete this prescription? This action cannot be undone.
             </p>
             <div className="flex justify-center gap-4">
               <button
                 onClick={() => setShowConfirmModal(false)}
-                className="bg-gray-300 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-400"
+                className="bg-gray-300 text-gray-800 py-2 px-5 rounded-md hover:bg-gray-400 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDeletePrescription}
-                className="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700"
+                className="bg-red-600 text-white py-2 px-5 rounded-md hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
+                disabled={isDeleting}
               >
-                Delete
+                {isDeleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
