@@ -5,13 +5,14 @@ import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianG
 import { DoctorsApi, type DoctorData } from '../../features/api/DoctorsApi';
 import { patientsApi } from '../../features/api/PatientsApi';
 import { userApi, type userData } from '../../features/api/userApi';
-import { AppointmentsApi, type AppointmentData } from '../../features/api/AppointmentsApi';
+import type { AppointmentData } from '../../types/appointmentTypes';
 import { complaintsApi, type ComplaintData } from '../../features/api/ComplaintsApi';
 import { PrescriptionsApi, type PrescriptionData } from '../../features/api/PrescriptionsApi';
 import { PaymentsApi, type PaymentData } from '../../features/api/PaymentsApi';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../app/types';
 import {PuffLoader} from 'react-spinners';
+import { AppointmentsApi } from '../../features/api/AppointmentsApi';
 
 const cardVariants = {
     hover: {
@@ -77,12 +78,19 @@ export const ManagementHubPage = () =>{
   const totalPatients = patientsData.length;
 
   // Total Appointments & Breakdown
+
+
+  // 'confirmed'
+  // | 'canceled'
+  // | 'completed'
+  // | 'rescheduled'
+  // | 'pending';
   const totalAppointments = appointmentsData.length;
-  const confirmedAppointments = appointmentsData.filter((app: AppointmentData) => app.status === 'scheduled').length;
+  const confirmedAppointments = appointmentsData.filter((app: AppointmentData) => app.status === 'pending').length;
   const canceledAppointments = appointmentsData.filter((app: AppointmentData) => app.status === 'rescheduled').length;
   const completedAppointments = appointmentsData.filter((app: AppointmentData) => app.status === 'completed').length;
-  const rescheduledAppointments = appointmentsData.filter((app: AppointmentData) => app.status === 'cancelled').length;
-  // const pendingAppointments = appointmentsData.filter((app: AppointmentData) => app.status === 'pending').length;
+  const rescheduledAppointments = appointmentsData.filter((app: AppointmentData) => app.status === 'canceled').length;
+  // const pendingAppointments = appointmentsData.filter((app: AppointmentData) => app.status === 'confirmed').length;
 
   // Total Prescriptions
   const totalPrescriptions = prescriptionsData.length;

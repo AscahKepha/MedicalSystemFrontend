@@ -1,102 +1,136 @@
 // src/pages/Doctor/DoctorsPaymentPage.tsx
+
 import React from 'react';
-import {
-    useGetPaymentsByDoctorIdQuery,
-    type PaymentData,
-} from '../../features/api/PaymentsApi'; // Adjust the import path as needed
-import { Table, message } from 'antd';
 import { useSelector } from 'react-redux';
-import type { RootState } from '../../app/types'; // Import RootState to access auth token
+import { Table } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+
+import {
+  useGetPaymentsByDoctorIdQuery,
+  type PaymentData,
+} from '../../features/api/PaymentsApi';
+import { useGetDoctorByUserIdQuery } from '../../features/api/DoctorsApi';
+import type { RootState } from '../../app/types';
+import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
 const DoctorsPayment: React.FC = () => {
-    // Assume the doctor's ID is available in your Redux store,
-    // from an authentication slice. Replace `doctorIdFromAuth`
-    // with the actual selector for your doctor's ID.
-    const doctorId = useSelector((state: RootState) => state.auth.user?.id); // Example: assuming userId is stored in auth.user.id
+  const user = useSelector((state: RootState) => state.auth.user);
+  const userId = user?.userId;
+  console.log('👤 userId:', userId);
 
-    const { data: payments, error, isLoading } = useGetPaymentsByDoctorIdQuery(doctorId!, {
-        skip: !doctorId, // Skip the query if doctorId is not available
-    });
+  // Get doctor by userId
+  const {
+    data: doctor,
+    isLoading: doctorLoading,
+    error: doctorError,
+  } = useGetDoctorByUserIdQuery(userId!, {
+    skip: !userId,
+  });
+  console.log('🩺 doctor:', doctor);
+  console.log('❌ doctorError:', doctorError);
 
-    const columns = [
-        {
-            title: 'Payment ID',
-            dataIndex: 'paymentId',
-            key: 'paymentId',
-        },
-        {
-            title: 'Patient/User ID', 
-            dataIndex: 'userId',
-            key: 'userId',
-        },
-        {
-            title: 'Appointment ID',
-            dataIndex: 'appointmentId',
-            key: 'appointmentId',
-        },
-        {
-            title: 'Amount',
-            dataIndex: 'amount',
-            key: 'amount',
-            render: (text: number) => `$${text.toFixed(2)}`,
-        },
-        {
-            title: 'Status',
-            dataIndex: 'status',
-            key: 'status',
-        },
-        {
-            title: 'Payment Method',
-            dataIndex: 'paymentMethod',
-            key: 'paymentMethod',
-        },
-        {
-            title: 'Transaction ID',
-            dataIndex: 'transactionId',
-            key: 'transactionId',
-        },
-        {
-            title: 'Payment Date',
-            dataIndex: 'paymentDate',
-            key: 'paymentDate',
-            render: (date: string) => new Date(date).toLocaleString(),
-        },
-        {
-            title: 'Created At', // Useful for doctors to track when records were made
-            dataIndex: 'createdAt',
-            key: 'createdAt',
-            render: (date: string) => new Date(date).toLocaleString(),
-        },
-    ];
+  const doctorId = doctor?.doctorId;
+  console.log('🆔 doctorId:', doctorId);
 
-    if (!doctorId) {
-        return <div>Please log in as a doctor to view your payments.</div>;
+  // Get payments by doctorId
+  const {
+    data: payments,
+    isLoading: paymentsLoading,
+    error: paymentsError,
+  } = useGetPaymentsByDoctorIdQuery(doctorId!, {
+    skip: !doctorId,
+  });
+  console.log('💵 payments:', payments);
+  console.log('❌ paymentsError:', paymentsError);
+
+  // Auth check
+  if (!userId) {
+    return <div>Please log in as a doctor to view your payments.</div>;
+  }
+
+  // Loading state
+  if (doctorLoading || paymentsLoading) {
+    return <div>Loading your payments... ⏳</div>;
+  }
+
+  // Error state
+  if (doctorError || paymentsError) {
+    const err = doctorError ?? paymentsError;
+
+    let errMsg = 'An unknown error occurred.';
+
+    if (err) {
+      if ('status' in err) {
+        errMsg =
+          'error' in err
+            ? String(err.error ?? 'Unknown error')
+            : JSON.stringify((err as FetchBaseQueryError).data ?? 'No data');
+      } else if ('message' in err) {
+        errMsg = err.message ?? 'An error occurred';
+      }
     }
 
-    if (isLoading) return <div>Loading your payments... ⏳</div>;
-    if (error) {
-        if ('status' in error) {
-            const errMsg = 'error' in error ? error.error : JSON.stringify(error.data);
-            return <div>Error loading your payments: {errMsg} ❗</div>;
-        } else {
-            return <div>Error loading your payments: {error.message} ❗</div>;
-        }
-    }
+    return <div>Error loading payments: {errMsg} ❗</div>;
+  }
 
-    return (
-        <div style={{ padding: '20px' }}>
-            <h2>My Payments (Doctor View) 💰</h2>
-            <p>Here you can see all payments associated with your services.</p>
-            <Table
-                columns={columns}
-                dataSource={payments}
-                rowKey="paymentId"
-                loading={isLoading}
-                scroll={{ x: 'max-content' }}
-                locale={{ emptyText: "No payments found for your account." }}
-            />
-        </div>
-    );
+  // Table columns
+  const columns: ColumnsType<PaymentData> = [
+    {
+      title: 'Payment ID',
+      dataIndex: 'paymentId',
+      key: 'paymentId',
+    },
+    {
+      title: 'Appointment ID',
+      dataIndex: 'appointmentId',
+      key: 'appointmentId',
+    },
+    {
+      title: 'Total Amount',
+      dataIndex: 'totalAmount',
+      key: 'totalAmount',
+      render: (amount: string) => `$${parseFloat(amount).toFixed(2)}`,
+    },
+    {
+      title: 'Payment Status',
+      dataIndex: 'PaymentStatus',
+      key: 'PaymentStatus',
+    },
+    {
+      title: 'Transaction ID',
+      dataIndex: 'transactionId',
+      key: 'transactionId',
+    },
+    {
+      title: 'Payment Date',
+      dataIndex: 'paymentDate',
+      key: 'paymentDate',
+      render: (date: string) => new Date(date).toLocaleString(),
+    },
+    {
+      title: 'Created At',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (date: string) => new Date(date).toLocaleString(),
+    },
+  ];
+
+  return (
+    <div style={{ padding: '20px' }}>
+      <h2>💰 My Payments (Doctor View)</h2>
+      <p>Below are payments associated with your appointments.</p>
+      <Table
+        columns={columns}
+        dataSource={(payments ?? []).map((item) => ({
+          ...item.payments,
+        }))}
+        rowKey="paymentId"
+        loading={paymentsLoading}
+        scroll={{ x: 'max-content' }}
+        locale={{ emptyText: 'No payments found for your account.' }}
+      />
+    </div>
+  );
 };
 
 export default DoctorsPayment;

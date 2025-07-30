@@ -1,8 +1,12 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import type { RootState } from '../../app/types'; // Assuming your store path is correct
+import type { RootState } from '../../app/types';
 
-// Define the PrescriptionData interface based on a hypothetical prescriptionsTable schema
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+// Define the PrescriptionData interface
 export interface PrescriptionData {
+    patient: any;
+    doctor: any;
     prescriptionId: number;
     patientId: number | null;
     doctorId: number | null;
@@ -18,11 +22,18 @@ export interface PrescriptionData {
     updatedAt: string;
 }
 
-// Define the Prescriptions API slice
+export interface DoctorIdResponse {
+  doctorId: number;
+}
+
+export interface PatientIdResponse {
+  patientId: number;
+}
+
 export const PrescriptionsApi = createApi({
     reducerPath: 'prescriptionsApi',
     baseQuery: fetchBaseQuery({
-        baseUrl: 'http://localhost:5000/api/',
+        baseUrl: backendUrl,
         prepareHeaders: (headers, { getState }) => {
             const token = (getState() as RootState).auth?.token;
             if (token) {
@@ -37,21 +48,21 @@ export const PrescriptionsApi = createApi({
     }),
     tagTypes: ['Prescription'],
     endpoints: (builder) => ({
-        // Query to get all prescriptions
+        // 🔄 Get all prescriptions (admin only)
         getPrescriptions: builder.query<PrescriptionData[], void>({
             query: () => 'prescriptions',
             providesTags: ['Prescription'],
         }),
 
-        // Query to get a single prescription by ID
+        // 🔍 Get a prescription by its ID
         getPrescriptionById: builder.query<PrescriptionData, number>({
             query: (prescriptionId) => `prescriptions/${prescriptionId}`,
             providesTags: ['Prescription'],
         }),
 
-        // Mutation to add a new prescription
+        // ➕ Add a new prescription
         addPrescription: builder.mutation<
-            PrescriptionData, 
+            PrescriptionData,
             Omit<PrescriptionData, 'prescriptionId' | 'createdAt' | 'updatedAt'>
         >({
             query: (newPrescriptionData) => ({
@@ -62,67 +73,100 @@ export const PrescriptionsApi = createApi({
             invalidatesTags: ['Prescription'],
         }),
 
-        // Mutation to update an existing prescription
+        // ✏️ Update prescription
         updatePrescription: builder.mutation<
             PrescriptionData,
             Partial<PrescriptionData> & { prescriptionId: number }
         >({
             query: ({ prescriptionId, ...patch }) => ({
-                url: `prescriptions/${prescriptionId}`, 
+                url: `prescriptions/${prescriptionId}`,
                 method: 'PATCH',
-                body: patch, 
+                body: patch,
             }),
-            invalidatesTags: (result, error, { prescriptionId }) => [{ type: 'Prescription', id: prescriptionId }, 'Prescription'], // Invalidate specific prescription and general list
+            invalidatesTags: ['Prescription'],
         }),
 
-        // Mutation to delete a prescription
+        // ❌ Delete a prescription
         deletePrescription: builder.mutation<void, number>({
             query: (prescriptionId) => ({
                 url: `prescriptions/${prescriptionId}`,
                 method: 'DELETE',
             }),
-            invalidatesTags: (result, error, prescriptionId) => [{ type: 'Prescription', id: prescriptionId }, 'Prescription'], // Invalidate specific prescription and general list
+            invalidatesTags:  ['Prescription'],
         }),
 
-        // Query to get prescriptions by patient ID
+        // 👤 Get prescriptions by patient ID
         getPrescriptionsByPatientId: builder.query<PrescriptionData[], number>({
-            query: (patientId) => `patients/${patientId}/prescriptions`, 
+            query: (patientId) => `patients/${patientId}/prescriptions`,
             providesTags: (result, _error, patientId) =>
                 result
                     ? [
                         { type: 'Prescription', id: `LIST_BY_PATIENT_${patientId}` },
-                        ...result.map(({ prescriptionId }) => ({ type: 'Prescription' as const, id: prescriptionId })),
+                        ...result.map(({ prescriptionId }) => ({
+                            type: 'Prescription' as const,
+                            id: prescriptionId,
+                        })),
                     ]
                     : [{ type: 'Prescription', id: `LIST_BY_PATIENT_${patientId}` }],
         }),
 
-        // Query to get prescriptions by doctor ID
+        // 👨‍⚕️ Get prescriptions by doctor ID
         getPrescriptionsByDoctorId: builder.query<PrescriptionData[], number>({
             query: (doctorId) => `doctors/${doctorId}/prescriptions`,
             providesTags: (result, _error, doctorId) =>
                 result
                     ? [
                         { type: 'Prescription', id: `LIST_BY_DOCTOR_${doctorId}` },
-                        ...result.map(({ prescriptionId }) => ({ type: 'Prescription' as const, id: prescriptionId })),
+                        ...result.map(({ prescriptionId }) => ({
+                            type: 'Prescription' as const,
+                            id: prescriptionId,
+                        })),
                     ]
                     : [{ type: 'Prescription', id: `LIST_BY_DOCTOR_${doctorId}` }],
         }),
 
-        // Query to get prescriptions by appointment ID
+        // 📅 Get prescriptions by appointment ID (NOTE: check if endpoint exists)
         getPrescriptionsByAppointmentId: builder.query<PrescriptionData[], number>({
-            query: (appointmentId) => `prescriptions/${appointmentId}`, 
+            query: (appointmentId) => `prescriptions/${appointmentId}`,
             providesTags: (result, _error, appointmentId) =>
                 result
                     ? [
                         { type: 'Prescription', id: `LIST_BY_APPOINTMENT_${appointmentId}` },
-                        ...result.map(({ prescriptionId }) => ({ type: 'Prescription' as const, id: prescriptionId })),
+                        ...result.map(({ prescriptionId }) => ({
+                            type: 'Prescription' as const,
+                            id: prescriptionId,
+                        })),
                     ]
                     : [{ type: 'Prescription', id: `LIST_BY_APPOINTMENT_${appointmentId}` }],
         }),
+
+        // 🧑‍💼 NEW: Get prescriptions by user ID (mapped to patient ID in backend)
+        getPrescriptionsByUserId: builder.query<PrescriptionData[], number>({
+            query: (userId) => `users/${userId}/prescriptions`,
+            providesTags: (result, _error, userId) =>
+                result
+                    ? [
+                        { type: 'Prescription', id: `LIST_BY_USER_${userId}` },
+                        ...result.map(({ prescriptionId }) => ({
+                            type: 'Prescription' as const,
+                            id: prescriptionId,
+                        })),
+                    ]
+                    : [{ type: 'Prescription', id: `LIST_BY_USER_${userId}` }],
+        }),
+
+        getDoctorIdByUserId: builder.query<DoctorIdResponse, number>({
+              query: (userId) => `doctor-id/by-user/${userId}`,
+            }),
+        
+            // ✅ New endpoint to get patientId from userId
+            getPatientIdByUserId: builder.query<PatientIdResponse, number>({
+              query: (userId) => `patient-id/${userId}`,
+            }),
     }),
 });
 
-// Export hooks for use in your React components
+// Export all auto-generated hooks
 export const {
     useGetPrescriptionsQuery,
     useGetPrescriptionByIdQuery,
@@ -132,4 +176,7 @@ export const {
     useGetPrescriptionsByPatientIdQuery,
     useGetPrescriptionsByDoctorIdQuery,
     useGetPrescriptionsByAppointmentIdQuery,
+    useGetPrescriptionsByUserIdQuery, // ✅ NEW HOOK
+    useGetDoctorIdByUserIdQuery,
+    useGetPatientIdByUserIdQuery, // ✅ Export the hook
 } = PrescriptionsApi;

@@ -2,11 +2,9 @@
 import React, { useState } from 'react';
 import {
     useGetPaymentsQuery,
-    useGetPaymentByIdQuery,
     useAddPaymentMutation,
     useUpdatePaymentMutation,
     useDeletePaymentMutation,
-    useGetPaymentsByUserIdQuery,
     type PaymentData
 } from '../../features/api/PaymentsApi';
 import { Modal, Button, Form, Input, Select, Table, Space, message, Popconfirm } from 'antd'; //using ant design for quality in ui and functionalities instead of native html

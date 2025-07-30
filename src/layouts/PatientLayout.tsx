@@ -18,7 +18,7 @@ const patientNavItems = [
   { to: 'appointments', icon: <FaCalendarAlt className="mr-3" />, label: 'Appointments' },
   { to: 'prescriptions', icon: <FaFilePrescription className="mr-3" />, label: 'Prescriptions' },
   { to: 'complaints', icon: <FaClipboardList className="mr-3" />, label: 'Complaints' },
-  { to: 'find-doctor', icon: <FaUserMd className="mr-3" />, label: 'Find Doctor' },
+  { to: 'find-doctor', icon: <FaUserMd className="mr-3" />, label: 'Book-Appointment' },
   { to: 'support', icon: <FaQuestionCircle className="mr-3" />, label: 'Help/Support' },
   { to: 'payments', icon: <FaCreditCard className="mr-3" />, label: 'Payments' },
 ];

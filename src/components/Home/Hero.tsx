@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import hero1 from "../../assets/Screenshot 2025-07-09 131101.png"
-import hero2 from "../../assets/Screenshot 2025-07-09 214758.png"
 
 
 export const Hero:React.FC = () =>{

@@ -3,6 +3,9 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../../app/types';
 import type { UserProfile } from '../../features/auth/authSlice';
 import type { BackendLoginResponse } from '../../types/auth';
+// import { backendUrl } from '../../backendUrl';
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export interface userData {
   createdAt: any;
@@ -20,7 +23,7 @@ export interface userData {
 export const userApi = createApi({
   reducerPath: 'userApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://localhost:5000/api/',
+    baseUrl: backendUrl,
     prepareHeaders: (headers, { getState }) => {
       const token = (getState() as RootState).auth.token;
       if (token) {

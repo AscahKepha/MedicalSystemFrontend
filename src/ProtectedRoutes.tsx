@@ -1,6 +1,6 @@
 import { useSelector } from "react-redux";
 import {Navigate} from 'react-router-dom' //Navigate is used for maps for direct redirections
-import type { RootState } from "../src/app/store";
+import type { RootState } from "../src/app/types";
 
 
 type ProtectedRouteProps = {

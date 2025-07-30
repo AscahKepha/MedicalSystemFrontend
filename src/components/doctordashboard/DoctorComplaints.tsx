@@ -6,19 +6,15 @@ import {
   type ComplaintStatus,
 } from '../../features/api/ComplaintsApi';
 import { useSelector } from 'react-redux';
-import type { RootState } from '../../app/types'; // Assuming your RootState is here
+import type { RootState } from '../../app/types';
 
 const DoctorsComplaints: React.FC = () => {
-  // Assuming you store the logged-in user's ID in your Redux store,
-  // typically in an auth slice. Adjust the selector path as needed.
-  const userId = useSelector((state: RootState) => state.auth.user?.id); // Get userId from Redux store
-  const userRole = useSelector((state: RootState) => state.auth.user?.role); // Get userRole if needed for conditional rendering
+  const user = useSelector((state: RootState) => state.auth.user);
+  const userId = user?.userId ?? user?.id;
 
-  // State for the new complaint form
   const [newComplaint, setNewComplaint] = useState({
     subject: '',
     description: '',
-    relatedAppointmentId: '', // Optional: if you want to link complaints to appointments
   });
 
   const {
@@ -28,12 +24,10 @@ const DoctorsComplaints: React.FC = () => {
     isFetching,
     refetch,
   } = useGetComplaintsByUserIdQuery(userId?.toString() || '', {
-    // Skip the query if userId is not available (e.g., user not logged in)
     skip: !userId,
   });
 
-  const [addComplaint, { isLoading: isAddingComplaint }] =
-    useAddComplaintMutation();
+  const [addComplaint, { isLoading: isAddingComplaint }] = useAddComplaintMutation();
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -56,36 +50,38 @@ const DoctorsComplaints: React.FC = () => {
     }
 
     try {
-      await addComplaint({
+      const response = await addComplaint({
         subject: newComplaint.subject,
         description: newComplaint.description,
-        userId: userId, // Pass the logged-in userId
-        relatedAppointmentId: newComplaint.relatedAppointmentId
-          ? parseInt(newComplaint.relatedAppointmentId) // Parse to number if it exists
-          : undefined, // Send undefined if not provided
+        userId,
       }).unwrap();
+
+      console.log('✅ Complaint submitted:', response);
       alert('Complaint submitted successfully!');
-      setNewComplaint({ subject: '', description: '', relatedAppointmentId: '' }); // Clear form
+      setNewComplaint({ subject: '', description: '' });
     } catch (err) {
-      console.error('Error submitting complaint:', err);
+      console.error('❌ Error submitting complaint:', err);
       alert('Failed to submit complaint. Please try again.');
     }
   };
 
-  const getStatusClasses = (status: ComplaintStatus) => {
-    switch (status) {
+  const getStatusClasses = (status?: ComplaintStatus | string) => {
+    const normalizedStatus = (status ?? '').toLowerCase();
+    switch (normalizedStatus) {
       case 'open':
         return 'bg-red-100 text-red-800';
-      case 'In Progress': // Ensure case matches your enum/backend values exactly
+      case 'in progress':
         return 'bg-blue-100 text-blue-800';
       case 'resolved':
         return 'bg-green-100 text-green-800';
       case 'closed':
         return 'bg-gray-200 text-gray-700';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-yellow-100 text-yellow-800'; // fallback
     }
   };
+
+  console.log('📦 Complaints fetched:', complaints);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 font-inter">
@@ -94,7 +90,7 @@ const DoctorsComplaints: React.FC = () => {
           My Complaints
         </h1>
 
-        {/* Create Complaint Section */}
+        {/* === Complaint Form === */}
         <div className="mb-10 p-6 border border-gray-200 rounded-lg shadow-sm">
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">
             Submit a New Complaint
@@ -128,20 +124,6 @@ const DoctorsComplaints: React.FC = () => {
                 required
               ></textarea>
             </div>
-            <div>
-              <label htmlFor="relatedAppointmentId" className="block text-sm font-medium text-gray-700 mb-1">
-                Related Appointment ID (Optional)
-              </label>
-              <input
-                type="number" // Use type number for IDs
-                id="relatedAppointmentId"
-                name="relatedAppointmentId"
-                value={newComplaint.relatedAppointmentId}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g., 123"
-              />
-            </div>
             <button
               type="submit"
               className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
@@ -152,7 +134,7 @@ const DoctorsComplaints: React.FC = () => {
           </form>
         </div>
 
-        {/* View Complaints Section */}
+        {/* === Display Complaints === */}
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">
           My Existing Complaints
         </h2>
@@ -175,41 +157,39 @@ const DoctorsComplaints: React.FC = () => {
           </p>
         ) : (
           <div className="space-y-6">
-            {complaints.map((complaint: ComplaintData) => (
-              <div
-                key={complaint.id}
-                className="border border-gray-200 rounded-lg p-5 hover:shadow transition"
-              >
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2">
-                  <h2 className="text-xl font-semibold text-gray-800">
-                    {complaint.subject}
-                  </h2>
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusClasses(
-                      complaint.status
-                    )}`}
-                  >
-                    {complaint.status}
-                  </span>
+            {complaints.map((complaint: ComplaintData, index) => {
+              const status = complaint.status ?? complaint.complaintStatus;
+              const id = complaint.id ?? complaint.complaintsId ?? `fallback-${index}`;
+
+              return (
+                <div
+                  key={id}
+                  className="border border-gray-200 rounded-lg p-5 hover:shadow transition"
+                >
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2">
+                    <h2 className="text-xl font-semibold text-gray-800">
+                      {complaint.subject}
+                    </h2>
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusClasses(
+                        status
+                      )}`}
+                    >
+                      {status ?? 'Unknown'}
+                    </span>
+                  </div>
+                  <p className="text-gray-700 mb-2">{complaint.description}</p>
+                  <p className="text-sm text-gray-500">
+                    Submitted: {complaint.createdAt ? new Date(complaint.createdAt).toLocaleDateString() : 'N/A'}
+                  </p>
+                  {complaint.updatedAt && complaint.updatedAt !== complaint.createdAt && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Last Updated: {new Date(complaint.updatedAt).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
-                <p className="text-gray-700 mb-2">{complaint.description}</p>
-                {complaint.relatedAppointmentId && (
-                  <p className="text-sm text-gray-600 mb-1">
-                    Related Appointment ID: {complaint.relatedAppointmentId}
-                  </p>
-                )}
-                <p className="text-sm text-gray-500">
-                  Submitted:{' '}
-                  {new Date(complaint.createdAt).toLocaleDateString()}
-                </p>
-                {complaint.updatedAt && complaint.updatedAt !== complaint.createdAt && (
-                  <p className="text-xs text-gray-400 mt-1">
-                    Last Updated:{' '}
-                    {new Date(complaint.updatedAt).toLocaleDateString()}
-                  </p>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -1,6 +1,8 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { RootState } from "../../app/types";
+// import { backendUrl } from "../../backendUrl";
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export interface PatientData { 
     patientId: number;
@@ -41,7 +43,7 @@ export interface LoginResponse {
 export const patientsApi = createApi({
     reducerPath: 'patientsApi',
     baseQuery: fetchBaseQuery({
-        baseUrl: 'http://localhost:5000/api/',
+        baseUrl: backendUrl,
         prepareHeaders: (headers, { getState }) => {
             const token = (getState() as RootState).auth?.token;
             if (token) {

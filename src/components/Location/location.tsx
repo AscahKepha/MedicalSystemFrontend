@@ -1,11 +1,9 @@
-import React from 'react';
 import { FaLocationDot } from 'react-icons/fa6'; // Assuming you still want this icon
 
 const Location = () => {
     const googleMapsApiKey = 'YOUR_Maps_API_KEY'; // Replace with your actual API key
     const latitude = 59.334591; // Example: Latitude for Stockholm city center (approx)
     const longitude = 18.063240; // Example: Longitude for Stockholm city center (approx)
-    const placeName = 'Aura Healthcare - Nothern Harmton'; // Name to display on the map marker
 
     const mapUrl = `https://www.google.com/maps/embed/v1/place?key=${googleMapsApiKey}&q=${latitude},${longitude}&zoom=15&center=${latitude},${longitude}`;
 

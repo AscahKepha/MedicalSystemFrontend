@@ -8,10 +8,10 @@ import DoctorLayout from '../layouts/DoctorLayout';
 import AdminDashboard from '../components/doctordashboard/doctorsdashboard'; // ✅ this is your dashboard layout (NavbarD, HeroD, FooterD)
 import DoctorProfile from '../components/doctordashboard/DoctorProfile';
 import { DoctorsPrescription } from '../components/doctordashboard/PrescriptionsPage';
-import SupportPage from '../components/doctordashboard/SupportPage';
 import DoctorsPayment from '../components/doctordashboard/PaymentsPage';
 import DoctorsComplaints from '../components/doctordashboard/DoctorComplaints';
-import DoctorsAppointments from '../components/doctordashboard/DoctorsAppointments';
+import DoctorsAppointments from '../components/doctordashboard/MyAppointments/DoctorsAppointments';
+import Contact from '../pages/Contact';
 
 export const doctorRoutes = {
   path: 'doctordashboard', // ✅ Must match exactly with your navigate('/doctordashboard')
@@ -26,7 +26,7 @@ export const doctorRoutes = {
     { path: 'appointments', element: <DoctorsAppointments /> },
     { path: 'prescriptions', element: <DoctorsPrescription /> },
     { path: 'complaints', element: <DoctorsComplaints /> },
-    { path: 'support', element: <SupportPage /> },
+    { path: 'support', element: < Contact /> },
     { path: 'payments', element: <DoctorsPayment /> },
 
     // Optional fallback for unknown subroutes under /doctordashboard

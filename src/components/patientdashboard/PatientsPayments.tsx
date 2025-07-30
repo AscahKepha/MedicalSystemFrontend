@@ -5,8 +5,8 @@ import {
     useAddPaymentMutation,
     type PaymentData
 } from '../../features/api/PaymentsApi';
-import type { PaymentStatus } from '../../features/api/PaymentsApi';
-import { Modal, Button, Form, Input, Select, Table, Space, message, Popconfirm } from 'antd';
+// import type { PaymentStatus } from '../../features/api/PaymentsApi';
+import { Modal, Button, Form, Input, Select, Table, message} from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../app/types'; // Import RootState to access auth token
@@ -52,6 +52,7 @@ export const PatientsPayment: React.FC = () => {
             const newPaymentPayload: Omit<PaymentData, 'paymentId' | 'paymentDate' | 'status' | 'createdAt' | 'updatedAt'> = {
                 userId: patientId, // Assign the logged-in patient's ID
                 appointmentId: values.appointmentId,
+                payments: values.appointmentId ? values.appointmentId : null, // Optional field
                 amount: values.amount,
                 paymentMethod: values.paymentMethod,
                 transactionId: values.transactionId,

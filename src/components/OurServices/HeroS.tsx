@@ -1,4 +1,3 @@
-import React from "react";
 // Import some icons from react-icons. You might need to install: npm install react-icons
 import { FaStethoscope, FaBrain, FaDollarSign, FaBookOpen, FaCalendarAlt } from 'react-icons/fa';
 import {RiWomenFill} from "react-icons/ri";

@@ -1,64 +1,47 @@
+// src/features/api/AppointmentsApi.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../../app/types';
+import type { AppointmentData } from '../../types/appointmentTypes';
 
-// Define possible statuses for an appointment
-export type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
+// ✅ Read the backend URL from .env
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-// Define the AppointmentData interface
-export interface AppointmentData {
-  patientId: number;
-  appointmentId: number;
-  userId: number;
-  doctorId: number;
-  appointmentDate: string;
-  timeSlot: string;
-  appointmentTime: string;
-  reason: string;
-  totalAmount: string;
-  startTime: string;
-  endTime: string;
-  status: AppointmentStatus;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Define the Doctor ID Response type
 export interface DoctorIdResponse {
   doctorId: number;
 }
 
-// Define the Appointments API slice
+export interface PatientIdResponse {
+  patientId: number;
+}
+
 export const AppointmentsApi = createApi({
   reducerPath: 'appointmentsApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://localhost:5000/api/',
+    baseUrl: backendUrl,
     prepareHeaders: (headers, { getState }) => {
       const token = (getState() as RootState).auth?.token;
       if (token) {
         const formattedToken = token.startsWith('Bearer') ? token : `Bearer ${token}`;
         headers.set('Authorization', formattedToken);
-        console.log('Using token in appointments API requests:', formattedToken.substring(0, 20) + '...');
+        console.log('🛡️ Using token in appointments API requests:', formattedToken.substring(0, 20) + '...');
       } else {
-        console.warn('No token available for appointments API request');
+        console.warn('⚠️ No token available for appointments API request');
       }
       return headers;
     },
   }),
   tagTypes: ['Appointment'],
   endpoints: (builder) => ({
-    // Get all appointments
     getAppointments: builder.query<AppointmentData[], void>({
       query: () => 'appointments',
       providesTags: ['Appointment'],
     }),
 
-    // Get a single appointment by ID
     getAppointmentById: builder.query<AppointmentData, number>({
       query: (appointmentId) => `appointments/${appointmentId}`,
       providesTags: ['Appointment'],
     }),
 
-    // Add new appointment
     addAppointment: builder.mutation<
       AppointmentData,
       Omit<AppointmentData, 'appointmentId' | 'status' | 'createdAt' | 'updatedAt'>
@@ -68,13 +51,12 @@ export const AppointmentsApi = createApi({
         method: 'POST',
         body: {
           ...newAppointmentData,
-          status: 'scheduled',
+          status: 'Scheduled', // Match the enum casing from appointmentTypes.ts
         },
       }),
       invalidatesTags: ['Appointment'],
     }),
 
-    // Update appointment
     updateAppointment: builder.mutation<
       AppointmentData,
       Partial<AppointmentData> & { appointmentId: number }
@@ -90,7 +72,6 @@ export const AppointmentsApi = createApi({
       ],
     }),
 
-    // Delete appointment
     deleteAppointment: builder.mutation<void, number>({
       query: (appointmentId) => ({
         url: `appointments/${appointmentId}`,
@@ -102,7 +83,6 @@ export const AppointmentsApi = createApi({
       ],
     }),
 
-    // Get appointments by patient ID
     getAppointmentsByPatientId: builder.query<AppointmentData[], number>({
       query: (patientId) => `patients/${patientId}/appointments`,
       providesTags: (result, _error, patientId) =>
@@ -117,9 +97,6 @@ export const AppointmentsApi = createApi({
           : [{ type: 'Appointment', id: `LIST_BY_USER_${patientId}` }],
     }),
 
-
-
-    // Get appointments by doctor ID
     getAppointmentsByDoctorId: builder.query<AppointmentData[], number>({
       query: (doctorId) => `doctors/${doctorId}/appointments`,
       providesTags: (result, _error, doctorId) =>
@@ -134,14 +111,16 @@ export const AppointmentsApi = createApi({
           : [{ type: 'Appointment', id: `LIST_BY_DOCTOR_${doctorId}` }],
     }),
 
-    // ✅ Get doctorId by userId
     getDoctorIdByUserId: builder.query<DoctorIdResponse, number>({
-      query: (userId) => `/doctor-id/by-user/${userId}`,
+      query: (userId) => `doctor-id/by-user/${userId}`,
+    }),
+
+    getPatientIdByUserId: builder.query<PatientIdResponse, number>({
+      query: (userId) => `patient-id/${userId}`,
     }),
   }),
 });
 
-// Export hooks
 export const {
   useGetAppointmentsQuery,
   useGetAppointmentByIdQuery,
@@ -151,4 +130,5 @@ export const {
   useGetAppointmentsByPatientIdQuery,
   useGetAppointmentsByDoctorIdQuery,
   useGetDoctorIdByUserIdQuery,
+  useGetPatientIdByUserIdQuery,
 } = AppointmentsApi;

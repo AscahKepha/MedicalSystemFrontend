@@ -17,10 +17,14 @@ const Alldoctors: React.FC = () => {
   // State to manage the form data for adding/editing a doctor
   const [formData, setFormData] = useState<Omit<DoctorData, 'doctorId' | 'createdAt' | 'updatedAt'> & { doctorId?: number }>({
     doctorId: undefined, // Used for editing: undefined for new, doctorId for existing
+    userId: 0, // Assuming userId is required for the doctor
     firstName: '',
     lastName: '',
     specialization: '',
     contactPhone: '',
+    availability: '',
+     availableTime: '',
+    availableDays: [],
     isAvailable: false,
   });
   // State to manage the visibility of the add/edit form
@@ -78,8 +82,8 @@ const Alldoctors: React.FC = () => {
         await addDoctorMutation(newDoctorData).unwrap();
       }
       resetForm();
-      setIsFormVisible(false); // Hide form after submission
-    } catch (err: any) { // Use 'any' for error type to access err.data or err.message
+      setIsFormVisible(false); 
+    } catch (err: any) { 
       console.error("Failed to save doctor:", err);
       setApiError(`Failed to save doctor: ${getErrorMessage(err)}`);
     }
@@ -89,11 +93,15 @@ const Alldoctors: React.FC = () => {
   const resetForm = () => {
     setFormData({
       doctorId: undefined,
+      userId: 0,
       firstName: '',
       lastName: '',
       specialization: '',
       contactPhone: '',
       isAvailable: false,
+      availableDays: [],
+      availableTime: '',
+      availability: '',
     });
   };
 
@@ -108,11 +116,15 @@ const Alldoctors: React.FC = () => {
   const handleEditDoctor = (doctor: DoctorData) => {
     setFormData({
       doctorId: doctor.doctorId,
+      userId:doctor.userId,
       firstName: doctor.firstName,
       lastName: doctor.lastName,
       specialization: doctor.specialization,
-      contactPhone: doctor.contactPhone || '', // Ensure it's a string
+      contactPhone: doctor.contactPhone || '', 
+      availability: doctor.availability || '',
       isAvailable: doctor.isAvailable,
+      availableDays: doctor.availableDays || [],
+      availableTime: doctor.availableTime || '',
     });
     setIsFormVisible(true);
     setApiError(null); // Clear any previous API errors

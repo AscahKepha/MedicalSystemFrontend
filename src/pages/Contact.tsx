@@ -1,5 +1,5 @@
 import React from "react";
-import { FaPhoneAlt, FaEnvelope, FaInstagram, FaPaperPlane, FaUser, FaLock, FaBullhorn } from 'react-icons/fa';
+import { FaPhoneAlt, FaEnvelope, FaInstagram, FaPaperPlane, FaUser, FaBullhorn } from 'react-icons/fa';
 import contactImage from '../assets/Screenshot 2025-07-15 112004.png'
 
 export const Contact: React.FC =()=>{

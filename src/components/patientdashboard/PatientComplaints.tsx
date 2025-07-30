@@ -12,7 +12,7 @@ const UserComplaintsPage: React.FC = () => {
   // Assuming you store the logged-in user's ID in your Redux store,
   // typically in an auth slice. Adjust the selector path as needed.
   const userId = useSelector((state: RootState) => state.auth.user?.id); // Get userId from Redux store
-  const userRole = useSelector((state: RootState) => state.auth.user?.role); // Get userRole if needed for conditional rendering
+  // const userRole = useSelector((state: RootState) => state.auth.user?.role); // Get userRole if needed for conditional rendering
 
   // State for the new complaint form
   const [newComplaint, setNewComplaint] = useState({

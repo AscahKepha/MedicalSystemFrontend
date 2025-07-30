@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAddAppointmentMutation } from '../../features/api/AppointmentsApi';
+import { useAddAppointmentMutation } from '../../../features/api/AppointmentsApi';
 
 interface Props {
   doctorId: number;
@@ -29,16 +29,18 @@ const DoctorCreateAppointmentModal: React.FC<Props> = ({
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     try {
       await addAppointment({
         ...form,
         doctorId,
         patientId: parseInt(form.patientId, 10),
         userId: 0,
-        appointmentTime: ''
+        appointmentTime: '',
+        totalAmount: parseFloat(form.totalAmount), // ✅ fix: convert string to number
+        appointmentStatus: 'confirmed',
       }).unwrap();
 
       setForm({

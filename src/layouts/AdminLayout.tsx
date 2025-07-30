@@ -39,10 +39,9 @@ const AdminLayout: React.FC = () => {
                 <NavLink
                   to={item.to}
                   className={({ isActive }) =>
-                    `flex items-center px-4 py-2 rounded-lg transition-colors text-base font-medium ${
-                      isActive
-                        ? 'text-blue-600 bg-blue-50'
-                        : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
+                    `flex items-center px-4 py-2 rounded-lg transition-colors text-base font-medium ${isActive
+                      ? 'text-blue-600 bg-blue-50'
+                      : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
                     }`
                   }
                 >

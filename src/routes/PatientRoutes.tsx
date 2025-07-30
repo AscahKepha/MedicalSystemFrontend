@@ -3,7 +3,7 @@ import UserComplaintsPage from "../components/patientdashboard/PatientComplaints
 import ProtectedRoute from "../ProtectedRoutes";
 import PatientProfile from "../components/patientdashboard/patientProfile";
 import PatientLayout from "../layouts/PatientLayout";
-import PatientAppointments from "../components/patientdashboard/PatientsAppointments";
+import PatientAppointments from "../components/patientdashboard/PatientAppointment/PatientsAppointments";
 import { Contact } from "../pages/Contact";
 import PatientsPrescription from "../components/patientdashboard/PatientsPrescriptions";
 import PatientsPayment from "../components/patientdashboard/PatientsPayments";

@@ -1,9 +1,15 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../../app/types';
+// import { backendUrl } from '../../backendUrl';
+
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export type ComplaintStatus = 'open' | 'In Progress' | 'resolved' | 'closed';
 
 export interface ComplaintData {
+    complaintStatus: string;
+    complaintsId: any;
     id: string;
     userId?: number;
     relatedAppointmentId?: number;
@@ -17,7 +23,7 @@ export interface ComplaintData {
 export const complaintsApi = createApi({
     reducerPath: 'complaintsApi',
     baseQuery: fetchBaseQuery({
-        baseUrl: 'http://localhost:5000/api/',
+        baseUrl: backendUrl,
         prepareHeaders: (headers, { getState }) => {
             const token = (getState() as RootState).auth?.token;
             if (token) {

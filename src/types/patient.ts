@@ -5,7 +5,7 @@
 import { type UserProfile } from '../../src/features/auth/authSlice'; 
 
 // Import the specific data types for Appointments and Payments
-import { type AppointmentData } from '../features/api/AppointmentsApi'; 
+import { type AppointmentData } from '../../src/types/appointmentTypes'; 
 import { type PaymentData } from '../features/api/PaymentsApi';     
 
 export interface PatientProfileDisplay extends UserProfile {

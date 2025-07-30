@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { FaLocationDot } from 'react-icons/fa6';
 import location from '../assets/Screenshot 2025-07-09 002150.png'
 

@@ -1,11 +1,15 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type { RootState } from '../../app/types';
+// import { backendUrl } from '../../backendUrl';
 
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 // Define possible statuses for a payment
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 
 // Define the PaymentData interface
 export interface PaymentData {
+    payments: any;
     paymentId: number;
     userId: number; // This might represent either patientId or doctorId depending on context, or you might need separate fields
     appointmentId?: number;
@@ -24,7 +28,7 @@ export interface PaymentData {
 export const PaymentsApi = createApi({
     reducerPath: 'paymentsApi',
     baseQuery: fetchBaseQuery({
-        baseUrl: 'http://localhost:5000/api/',
+        baseUrl: backendUrl,
         prepareHeaders: (headers, { getState }) => {
             // Retrieve the authentication token from your Redux store
             const token = (getState() as RootState).auth?.token;
