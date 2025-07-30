@@ -1,0 +1,13 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/api/*"]
+  },
+  "routes": [
+    {
+      "route": "/api/*",
+      "rewrite": "https://aurahealth.azurewebsites.net/api/:path*",
+      "allowedRoles": ["anonymous"]
+    }
+  ]
+}
