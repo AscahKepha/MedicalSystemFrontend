@@ -12,8 +12,8 @@ export interface UserData {
   email?: string;
   password?: string;      // password is in backend response, though you might not use it in frontend
   contactPhone?: string;
-  address?: string;
-  userType?: 'admin' | 'doctor' | 'patient';
+  address?: string | null;
+  userType?: 'admin' | 'doctor' | 'patient' | string; // <-- CHANGED: Allow any string or original literals
   createdAt: string;
   updatedAt: string;
   [key: string]: any;
@@ -47,6 +47,7 @@ export interface PatientData {
 }
 
 export interface AppointmentData {
+  // fee: number;
   appointmentId: number;
   userId: number;                 // this appears on your original type, but is it needed? Keep if backend sends it.
   status?: AppointmentStatus;    // you had both `status` and `appointmentStatus`, keep optional to avoid conflicts
@@ -66,4 +67,14 @@ export interface AppointmentData {
   // Optional nested objects
   doctor?: DoctorData;
   patient?: PatientData;
+}
+
+export interface DoctorInput {
+  userId?: number;
+  firstName: string;
+  lastName: string;
+  specialization: string;
+  contactPhone: string;
+  isAvailable: boolean;
+  availability?: any[];
 }

@@ -3,6 +3,11 @@ import { userRoutes } from "./routes/UserRoutes";
 import { adminRoutes } from "./routes/AdminRoutes";
 import { doctorRoutes } from "./routes/DoctorRoutes";
 import { patientRoutes } from "./routes/PatientRoutes";
+import { Toaster } from "react-hot-toast";
+
+// ✅ Import payment pages
+import PaymentSuccess from "./components/patientdashboard/PatientAppointment/payment-success";
+import PaymentCancel from "./components/patientdashboard/PatientAppointment/payment-cancel";
 
 function RouteErrorBoundary() {
   const error = useRouteError();
@@ -35,13 +40,23 @@ function App() {
       ...adminRoutes,
       errorElement: <RouteErrorBoundary />,
     },
+    // ✅ Payment result routes
+    {
+      path: "/user/payment-success",
+      element: <PaymentSuccess />,
+    },
+    {
+      path: "/user/payment-cancel",
+      element: <PaymentCancel />,
+    },
   ]);
 
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <Toaster position="top-center" reverseOrder={false} />
+      <RouterProvider router={router} />
+    </>
+  );
 }
 
 export default App;
-
-//tirigger
-
-//triggere

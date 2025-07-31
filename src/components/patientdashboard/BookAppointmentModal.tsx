@@ -1,154 +1,220 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { useAddAppointmentMutation } from '../../features/api/AppointmentsApi';
 import type { AppointmentStatus } from '../../types/appointmentTypes';
+import { toast } from 'react-hot-toast'; // or your toast library
+
+interface Slot {
+  slotFee: string;
+  day: string;
+  start: string;
+  end: string;
+}
 
 interface BookAppointmentModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess: () => void;
   doctor: {
     doctorId: number;
     userId: number;
-    // firstName?: string;
     firstName: string;
     lastName: string;
-    availability: { day: string; start: string; end: string }[];
+    availability: Slot[];
   };
   patientId: number;
 }
 
+const generateSlots = (start: string, end: string, duration: number) => {
+  const slots: string[] = [];
+  const [startHour, startMin] = start.split(':').map(Number);
+  const [endHour, endMin] = end.split(':').map(Number);
+
+  let current = new Date();
+  current.setHours(startHour, startMin, 0, 0);
+
+  const endTime = new Date();
+  endTime.setHours(endHour, endMin, 0, 0);
+
+  while (current < endTime) {
+    const next = new Date(current.getTime() + duration * 60000);
+    if (next > endTime) break;
+
+    const time = current.toTimeString().substring(0, 5);
+    slots.push(time);
+    current = next;
+  }
+
+  return slots;
+};
+
+const getDayName = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', { weekday: 'long' });
+};
+
 const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
   isOpen,
   onClose,
+  onSuccess,
   doctor,
   patientId,
 }) => {
-  const [selectedDay, setSelectedDay] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
   const [appointmentDate, setAppointmentDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [reason, setReason] = useState('');
-  const [totalAmount, setTotalAmount] = useState('');
   const [addAppointment, { isLoading }] = useAddAppointmentMutation();
 
-  const handleBook = async () => {
-    const selectedSlot = doctor.availability.find(a => a.day === selectedDay);
-    if (!selectedSlot) {
-      console.warn('No slot found for selected day');
-      return;
-    }
+  const availableDays = useMemo(() => doctor.availability.map((slot) => slot.day), [doctor]);
 
-    const parsedTotalAmount = parseFloat(totalAmount);
-    if (isNaN(parsedTotalAmount)) {
-      alert('Total Amount must be a valid number');
+  const selectedDay = useMemo(() => {
+    return appointmentDate ? getDayName(appointmentDate) : null;
+  }, [appointmentDate]);
+
+  const selectedSlot = useMemo(() => {
+    return doctor.availability.find((slot) => slot.day === selectedDay) || null;
+  }, [selectedDay, doctor.availability]);
+
+  const availableTimes = useMemo(() => {
+    if (!selectedSlot) return [];
+    return generateSlots(selectedSlot.start, selectedSlot.end, 30);
+  }, [selectedSlot]);
+
+  const slotFee = selectedSlot?.slotFee ?? '0';
+
+  const isDateAllowed = (dateStr: string) => {
+    const day = getDayName(dateStr);
+    return availableDays.includes(day);
+  };
+
+  const handleBook = async () => {
+    if (!appointmentDate || !selectedTime || !selectedDay || !selectedSlot || !reason) {
+      toast.error('Please fill all fields');
       return;
     }
 
     const payload = {
+      userId: patientId,
       patientId,
       doctorId: doctor.doctorId,
       appointmentDate,
       reason,
-      totalAmount: parsedTotalAmount,
+      totalAmount: parseFloat(slotFee),
       timeSlot: selectedTime,
       startTime: selectedSlot.start,
       endTime: selectedSlot.end,
-      userId: patientId,
       appointmentTime: selectedTime,
       appointmentStatus: 'pending' as AppointmentStatus,
     };
 
     try {
-      const response = await addAppointment(payload).unwrap();
-      console.log('✅ Appointment created:', response);
+      await addAppointment(payload).unwrap();
+      toast.success('Appointment booked successfully');
+      onSuccess();
       onClose();
     } catch (err) {
-      console.error('❌ Failed to create appointment:', err);
+      console.error('Booking error:', err);
+      toast.error('Failed to book appointment. Please try again.');
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="space-y-4">
         <DialogHeader>
           <DialogTitle>
             Book Appointment with Dr. {doctor.firstName} {doctor.lastName}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Appointment Date</label>
-            <Input
-              type="date"
-              value={appointmentDate}
-              onChange={(e) => setAppointmentDate(e.target.value)}
-            />
+        {/* Doctor Available Days */}
+        <div>
+          <p className="text-sm text-gray-600 font-medium mb-1">Doctor is available on:</p>
+          <div className="flex flex-wrap gap-2">
+            {availableDays.map((day, i) => (
+              <span
+                key={i}
+                className="bg-green-100 text-green-700 px-3 py-1 rounded text-xs font-medium"
+              >
+                {day}
+              </span>
+            ))}
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Available Days</label>
-            <select
-              value={selectedDay}
-              onChange={(e) => setSelectedDay(e.target.value)}
-              className="w-full border border-gray-300 rounded p-2"
-            >
-              <option value="">Select a day</option>
-              {doctor.availability.map((slot, index) => (
-                <option key={index} value={slot.day}>
-                  {slot.day} ({slot.start} - {slot.end})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Time Slot</label>
-            <Input
-              type="time"
-              value={selectedTime}
-              onChange={(e) => setSelectedTime(e.target.value)}
-              min={doctor.availability.find(a => a.day === selectedDay)?.start}
-              max={doctor.availability.find(a => a.day === selectedDay)?.end}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Reason</label>
-            <Input
-              type="text"
-              placeholder="e.g. Consultation, Checkup"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Total Amount</label>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="Total Amount"
-              value={totalAmount}
-              onChange={(e) => setTotalAmount(e.target.value)}
-            />
-          </div>
-
-          <Button
-            onClick={handleBook}
-            disabled={
-              isLoading ||
-              !appointmentDate ||
-              !selectedDay ||
-              !selectedTime ||
-              !totalAmount
-            }
-          >
-            {isLoading ? 'Booking...' : 'Confirm Booking'}
-          </Button>
         </div>
+
+        {/* Appointment Date */}
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-700">
+            Select Appointment Date
+          </label>
+          <Input
+            type="date"
+            value={appointmentDate}
+            onChange={(e) => {
+              const date = e.target.value;
+              if (isDateAllowed(date)) {
+                setAppointmentDate(date);
+                setSelectedTime(null);
+              } else {
+                toast.error('Doctor is not available on that day');
+              }
+            }}
+            className="border border-gray-300 p-2 rounded w-full"
+          />
+        </div>
+
+        {/* Charge Message */}
+        {selectedSlot && (
+          <p className="text-sm text-blue-600 font-medium">
+            You will be charged <strong>Ksh {slotFee}</strong>
+          </p>
+        )}
+
+        {/* Time Slots */}
+        {selectedSlot && (
+          <div>
+            <label className="block text-sm font-medium mb-1 text-gray-700">Select Time Slot</label>
+            <div className="flex flex-wrap gap-2">
+              {availableTimes.map((time, i) => (
+                <Button
+                  key={i}
+                  variant={selectedTime === time ? 'default' : 'outline'}
+                  onClick={() => setSelectedTime(time)}
+                >
+                  {time}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Reason */}
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-700">Reason for Visit</label>
+          <Input
+            type="text"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. Checkup, Consultation"
+          />
+        </div>
+
+        {/* Confirm Button */}
+        <Button
+          onClick={handleBook}
+          disabled={
+            isLoading ||
+            !appointmentDate ||
+            !selectedTime ||
+            !selectedDay ||
+            !selectedSlot ||
+            !reason
+          }
+        >
+          {isLoading ? 'Booking...' : 'Confirm Appointment'}
+        </Button>
       </DialogContent>
     </Dialog>
   );

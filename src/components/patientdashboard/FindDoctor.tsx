@@ -1,26 +1,8 @@
 import React, { useState } from 'react';
 import { useGetDoctorsQuery } from '../../features/api/DoctorsApi';
 import { FaUserMd, FaPhone, FaStethoscope, FaCalendarAlt } from 'react-icons/fa';
-import BookAppointmentModal from './PatientAppointment/BookAppointmentModal';
-
-// In a shared file like src/types/doctorTypes.ts
-export interface DoctorAvailability {
-  day: string;
-  start: string;
-  end: string;
-}
-
-export interface Doctor {
-  doctorId: number;
-  userId: number;
-  firstName: string;
-  lastName: string;
-  specialization?: string;
-  contactPhone?: string;
-  isAvailable?: boolean;
-  availability: DoctorAvailability[];
-}
-
+import BookAppointmentModal from './BookAppointmentModal';
+import type { Doctor } from '../../types/doctorTypes';
 
 const FindDoctor: React.FC = () => {
   const { data: doctors, isLoading, isError } = useGetDoctorsQuery();
@@ -55,9 +37,8 @@ const FindDoctor: React.FC = () => {
                 </p>
                 <p className="text-sm text-gray-600 flex items-center gap-1">
                   <span
-                    className={`w-2 h-2 rounded-full mr-2 ${
-                      doc.isAvailable ? 'bg-green-500' : 'bg-red-500'
-                    }`}
+                    className={`w-2 h-2 rounded-full mr-2 ${doc.isAvailable ? 'bg-green-500' : 'bg-red-500'
+                      }`}
                   />
                   {doc.isAvailable ? 'Available' : 'Not Available'}
                 </p>
@@ -70,9 +51,9 @@ const FindDoctor: React.FC = () => {
                   <FaCalendarAlt /> Schedule:
                 </div>
                 <ul className="ml-4 list-disc space-y-1">
-                  {doc.availability.map((slot, index) => (
-                    <li key={index}>
-                      <span className="font-medium">{slot.day}</span>: {slot.start} - {slot.end}
+                  {doc.availability.map((slot) => (
+                    <li key={slot.id}>
+                      <strong>{slot.dayOfWeek}</strong>: {slot.startTime} - {slot.endTime} | Fee: Ksh {slot.slotFee}
                     </li>
                   ))}
                 </ul>
@@ -93,8 +74,7 @@ const FindDoctor: React.FC = () => {
         ))}
       </div>
 
-      {/* Only render modal if userId exists */}
-      {selectedDoctor && selectedDoctor.userId !== undefined && (
+      {selectedDoctor && (
         <BookAppointmentModal
           isOpen={isBookingOpen}
           onClose={() => setBookingOpen(false)}
@@ -107,10 +87,17 @@ const FindDoctor: React.FC = () => {
             userId: selectedDoctor.userId,
             firstName: selectedDoctor.firstName,
             lastName: selectedDoctor.lastName,
-            availability: selectedDoctor.availability,
+            availability: selectedDoctor.availability.map((slot) => ({
+              day: slot.dayOfWeek,
+              start: slot.startTime,
+              end: slot.endTime,
+              slotFee: slot.slotFee, // ✅ This is now correct
+            })),
           }}
           patientId={patientId}
         />
+
+
       )}
     </div>
   );

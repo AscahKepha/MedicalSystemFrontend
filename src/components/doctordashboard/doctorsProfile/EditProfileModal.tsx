@@ -1,7 +1,7 @@
 import { FaTimes } from "react-icons/fa";
 import { SaveIcon } from "lucide-react";
 import { useForm, useFieldArray, type SubmitHandler } from "react-hook-form";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
 import { userApi } from "../../../features/api/userApi";
 
 type Props = {
@@ -11,9 +11,10 @@ type Props = {
 };
 
 interface AvailabilityItem {
-  day: string;
-  start: string;
-  end: string;
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  slotFee?: number;
 }
 
 interface ProfileFormValues {
@@ -27,8 +28,6 @@ interface ProfileFormValues {
 }
 
 const EditProfileModal: React.FC<Props> = ({ userId, userDetails, onClose }) => {
-  console.log("🧠 userDetails from props:", userDetails);
-
   const {
     register,
     control,
@@ -42,9 +41,15 @@ const EditProfileModal: React.FC<Props> = ({ userId, userDetails, onClose }) => 
       specialization: userDetails.specialization,
       contactPhone: userDetails.contactPhone,
       isAvailable: userDetails.isAvailable,
-      availability: userDetails.availability || [
-        { day: "Monday", start: "09:00", end: "17:00" },
-      ],
+      availability:
+        userDetails.availability?.map((slot: any) => ({
+          dayOfWeek: slot.dayOfWeek || slot.day || "",
+          startTime: slot.startTime || slot.start || "",
+          endTime: slot.endTime || slot.end || "",
+          slotFee: slot.slotFee || 0,
+        })) || [
+          { dayOfWeek: "Monday", startTime: "09:00", endTime: "17:00", slotFee: 0 },
+        ],
     },
   });
 
@@ -56,34 +61,32 @@ const EditProfileModal: React.FC<Props> = ({ userId, userDetails, onClose }) => 
   const [updateUserProfile] = userApi.useUpdateUserProfileMutation();
 
   const onSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
-    console.log("📦 Submitted form data:", data);
-
-    const fullPayload = {
+    const payload = {
       userId,
-      firstName: data.firstName || userDetails.firstName,
-      lastName: data.lastName || userDetails.lastName,
-      email: userDetails.email,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
       role: userDetails.role || "doctor",
-      password: userDetails.password || "",
-      specialization: data.specialization || userDetails.specialization || "",
-      contactPhone: data.contactPhone || userDetails.contactPhone || "",
+      specialization: data.specialization,
+      contactPhone: data.contactPhone,
       isAvailable:
         typeof data.isAvailable === "string"
           ? data.isAvailable === "true"
-          : data.isAvailable ?? userDetails.isAvailable ?? true,
-      availability: data.availability || [],
+          : data.isAvailable ?? true,
+      availability: data.availability?.map((slot) => ({
+        dayOfWeek: slot.dayOfWeek,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        slotFee: slot.slotFee ?? 0,
+      })),
     };
-
-    console.log("📤 Full payload sent to API:", fullPayload);
 
     const toastId = toast.loading("Updating profile...");
     try {
-      const res = await updateUserProfile(fullPayload).unwrap();
-      console.log("✅ Update response:", res);
+      const res = await updateUserProfile(payload).unwrap();
       toast.success(res.message, { id: toastId });
       onClose();
     } catch (error: any) {
-      console.error("❌ Update failed:", error);
       toast.error(error?.data?.error || "Update failed", { id: toastId });
     }
   };
@@ -96,14 +99,14 @@ const EditProfileModal: React.FC<Props> = ({ userId, userDetails, onClose }) => 
           {/* First Name */}
           <div className="mb-4">
             <label className="text-sm text-green-500">First Name</label>
-            <input {...register("firstName", { required: "Required" })} className="input w-full text-blue-500" />
+            <input {...register("firstName", { required: "Required" })} className="input w-full text-black bg-white" />
             {errors.firstName && <p className="text-red-500 text-sm">{errors.firstName.message}</p>}
           </div>
 
           {/* Last Name */}
           <div className="mb-4">
             <label className="text-sm text-green-500">Last Name</label>
-            <input {...register("lastName", { required: "Required" })} className="input w-full text-blue-500" />
+            <input {...register("lastName", { required: "Required" })} className="input w-full text-black bg-white" />
             {errors.lastName && <p className="text-red-500 text-sm">{errors.lastName.message}</p>}
           </div>
 
@@ -116,19 +119,19 @@ const EditProfileModal: React.FC<Props> = ({ userId, userDetails, onClose }) => 
           {/* Specialization */}
           <div className="mb-4">
             <label className="text-sm text-green-500">Specialization</label>
-            <input {...register("specialization")} className="input w-full text-blue-500" />
+            <input {...register("specialization")} className="input w-full text-black bg-white" />
           </div>
 
           {/* Contact Phone */}
           <div className="mb-4">
             <label className="text-sm text-green-500">Phone</label>
-            <input {...register("contactPhone")} className="input w-full text-blue-500" />
+            <input {...register("contactPhone")} className="input w-full text-black bg-white" />
           </div>
 
           {/* Availability Toggle */}
           <div className="mb-4">
             <label className="text-sm text-green-500">Currently Available?</label>
-            <select {...register("isAvailable")} className="select w-full text-blue-500">
+            <select {...register("isAvailable")} className="select w-full text-black bg-white">
               <option value="true">Yes</option>
               <option value="false">No</option>
             </select>
@@ -140,19 +143,26 @@ const EditProfileModal: React.FC<Props> = ({ userId, userDetails, onClose }) => 
             {fields.map((field, index) => (
               <div key={field.id} className="flex gap-2 items-center mb-2">
                 <input
-                  {...register(`availability.${index}.day` as const, { required: "Required" })}
+                  {...register(`availability.${index}.dayOfWeek` as const, { required: "Required" })}
                   placeholder="Day (e.g., Monday)"
-                  className="input input-sm w-[30%]"
+                  className="input input-sm w-[25%] bg-white text-black border border-gray-300"
                 />
                 <input
                   type="time"
-                  {...register(`availability.${index}.start` as const, { required: "Required" })}
-                  className="input input-sm w-[30%]"
+                  {...register(`availability.${index}.startTime` as const, { required: "Required" })}
+                  className="input input-sm w-[20%] bg-white text-black border border-gray-300"
                 />
                 <input
                   type="time"
-                  {...register(`availability.${index}.end` as const, { required: "Required" })}
-                  className="input input-sm w-[30%]"
+                  {...register(`availability.${index}.endTime` as const, { required: "Required" })}
+                  className="input input-sm w-[20%] bg-white text-black border border-gray-300"
+                />
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="Fee"
+                  {...register(`availability.${index}.slotFee` as const)}
+                  className="input input-sm w-[20%] bg-white text-black border border-gray-300"
                 />
                 <button type="button" onClick={() => remove(index)} className="btn btn-xs btn-error">
                   Remove
@@ -161,7 +171,7 @@ const EditProfileModal: React.FC<Props> = ({ userId, userDetails, onClose }) => 
             ))}
             <button
               type="button"
-              onClick={() => append({ day: "", start: "", end: "" })}
+              onClick={() => append({ dayOfWeek: "", startTime: "", endTime: "", slotFee: 0 })}
               className="btn btn-sm btn-outline mt-2"
             >
               Add Time Slot
