@@ -37,3 +37,13 @@ export interface Doctor {
   user: DoctorUser;
   availability: DoctorAvailability[];
 }
+
+// ✅ Add this at the end
+export interface DoctorInput {
+  userId?: number;
+  firstName: string;
+  lastName: string;
+  specialization: string;
+  contactPhone: string;
+  isAvailable: boolean;
+}

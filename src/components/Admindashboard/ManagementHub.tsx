@@ -2,7 +2,8 @@
 import { FaUsers, FaDollarSign, FaUserMd, FaHospitalUser, FaCalendarCheck, FaPrescriptionBottleAlt, FaExclamationTriangle } from 'react-icons/fa';
 import {motion} from 'framer-motion';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
-import { DoctorsApi, type DoctorData } from '../../features/api/DoctorsApi';
+import { DoctorsApi } from '../../features/api/DoctorsApi';
+import type { DoctorData } from '../../types/appointmentTypes'
 import { patientsApi } from '../../features/api/PatientsApi';
 import { userApi, type userData } from '../../features/api/userApi';
 import type { AppointmentData } from '../../types/appointmentTypes';
