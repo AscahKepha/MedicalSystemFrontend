@@ -1,25 +1,10 @@
+// 📁 src/features/api/DoctorsApi.ts
+
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { type RootState } from "../../app/types";
-import type { ReactNode } from "react";
+import type { Doctor } from "../../types/doctorTypes";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
-export interface DoctorData {
-  availability: any;
-  availableTime: ReactNode;
-  availableDays: any;
-  doctorId: number;
-    userId: number;            // <-- add this here
-
-  // userId?: number;
-  firstName: string;
-  lastName: string;
-  specialization: string;
-  contactPhone: string;
-  isAvailable: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
 
 export const DoctorsApi = createApi({
   reducerPath: "doctorsApi",
@@ -40,26 +25,26 @@ export const DoctorsApi = createApi({
   tagTypes: ["Doctor"],
   endpoints: (builder) => ({
     // ✅ Get all doctors
-    getDoctors: builder.query<DoctorData[], void>({
+    getDoctors: builder.query<Doctor[], void>({
       query: () => "doctors",
       providesTags: ["Doctor"],
     }),
 
-    // ✅ Get a doctor by ID (your existing version was incorrect — fixed below)
-    getDoctorById: builder.query<DoctorData, number>({
+    // ✅ Get a doctor by ID
+    getDoctorById: builder.query<Doctor, number>({
       query: (doctorId) => `doctors/${doctorId}`,
       providesTags: ["Doctor"],
     }),
 
     // ✅ Get doctor by userId
-    getDoctorByUserId: builder.query<DoctorData, number>({
+    getDoctorByUserId: builder.query<Doctor, number>({
       query: (userId) => `doctors/user/${userId}`,
       providesTags: ["Doctor"],
     }),
 
     // ✅ Add new doctor
     addDoctors: builder.mutation<
-      DoctorData,
+      Doctor,
       {
         userId?: number;
         firstName: string;
@@ -79,8 +64,8 @@ export const DoctorsApi = createApi({
 
     // ✅ Update doctor
     updateDoctor: builder.mutation<
-      DoctorData,
-      Partial<DoctorData> & { doctorId: number }
+      Doctor,
+      Partial<Doctor> & { doctorId: number }
     >({
       query: ({ doctorId, ...patch }) => ({
         url: `doctors/${doctorId}`,

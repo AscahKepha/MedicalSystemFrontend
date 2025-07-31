@@ -3,6 +3,7 @@ import { userRoutes } from "./routes/UserRoutes";
 import { adminRoutes } from "./routes/AdminRoutes";
 import { doctorRoutes } from "./routes/DoctorRoutes";
 import { patientRoutes } from "./routes/PatientRoutes";
+import { Toaster } from "react-hot-toast"; // ✅ Import Toaster
 
 function RouteErrorBoundary() {
   const error = useRouteError();
@@ -37,11 +38,12 @@ function App() {
     },
   ]);
 
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <Toaster position="top-center" reverseOrder={false} /> {/* ✅ Enables toast globally */}
+      <RouterProvider router={router} />
+    </>
+  );
 }
 
 export default App;
-
-//tirigger
-
-//triggere

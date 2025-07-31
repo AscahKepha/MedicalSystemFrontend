@@ -47,6 +47,7 @@ export interface PatientData {
 }
 
 export interface AppointmentData {
+  // fee: number;
   appointmentId: number;
   userId: number;                 // this appears on your original type, but is it needed? Keep if backend sends it.
   status?: AppointmentStatus;    // you had both `status` and `appointmentStatus`, keep optional to avoid conflicts
