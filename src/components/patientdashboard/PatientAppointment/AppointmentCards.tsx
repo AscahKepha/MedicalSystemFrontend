@@ -109,12 +109,9 @@ const AppointmentCards: React.FC<AppointmentCardsProps> = ({ appointments, docto
           onClose={() => setShowPaymentModal(false)}
           appointmentId={selectedAppointment.appointmentId}
           amount={selectedAppointment.totalAmount ?? 500}
-          onConfirm={() => {
-            console.log('Payment confirmed for', selectedAppointment.appointmentId);
-            setShowPaymentModal(false);
-          }}
         />
       )}
+
 
       {selectedAppointment && showRescheduleModal && (
         <RescheduleModal
