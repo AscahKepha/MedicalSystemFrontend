@@ -31,6 +31,7 @@ animation: zoomIn 10s ease-in-out infinite;}`;
             <div className="relative z-20 text-center max-w-4xl mx-auto">
             <h1 className="text-white text-5xl md:text-7xl font-extrabold uppercase tracking-wide leading-tight mb-6 drop-shadow-lg">
           Wellness in Your Hands. Together Towards a Healthier Tomorrow.
+          La Santé Entre Vos Mains. Ensemble Vers Un Demain Plus Sain.
         </h1>
         <p className="text-gray-100 text-xl md:text-2xl font-medium leading-relaxed drop-shadow-md">
           To nurture the mental and emotional well-being of every individual and build healthier, stronger communities—because true wellness grows when we care for each other deeply and compassionately

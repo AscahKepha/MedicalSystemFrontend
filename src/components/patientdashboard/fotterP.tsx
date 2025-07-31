@@ -10,11 +10,11 @@ export const FooterP: React.FC = () => {
         <section className="bg-gray-100 py-8 px-4"> {/* Light gray background, adjust as needed */}
         <div className="max-w-7xl mx-auto flex justify-between items-center"> 
           {/* Left Section: LOG OUT button */}
-          <div className="order-1"> {/* Ensures it's first */}
-          <button className="bg-transparent hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded transition-colors text-lg">
+          {/* <div className="order-1"> {/* Ensures it's first */}
+          {/*<button className="bg-transparent hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded transition-colors text-lg">
             LOG OUT
           </button>
-        </div>
+        </div> */}
 
       {/* Right Section: Social Media Icons */}
         <div className="flex space-x-6 md:space-x-8 order-2"> {/* order-2 makes it second */}
